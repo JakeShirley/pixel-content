@@ -6,6 +6,7 @@ Tools for preparing, inspecting, and serving dynamic animation content for `Cust
 
 - `ESP32AnimationConverter/`: browser-based GIF and `.bin` converter.
 - `ESP32AnimationSpriteSheet/`: command-line `.bin` decoder that writes PNG sprite sheets.
+- `ESP32Content/`: PowerShell cmdlets for inspecting `.bin` files and building the static content tree for GitHub Pages.
 - `Serve-ContentUpdates.ps1`: local static server helper for testing ESP32 dynamic content updates.
 
 ## Dynamic Content Server Format

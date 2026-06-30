@@ -1,0 +1,50 @@
+name: Deploy ESP32 Content Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - assets/processed/**
+      - tools/ESP32Content/**
+      - CONTENT_SERVER_FORMAT.md
+      - .github/workflows/deploy-content-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build content tree
+        shell: pwsh
+        run: |
+          Import-Module ./tools/ESP32Content/ESP32Content.psm1
+          Publish-ESP32AnimationContent -InputPath ./assets/processed -OutputPath ./_site -Clean -Recurse -PassThru |
+            Format-Table Dimensions, Name, FrameCount, FramesPerSecond, SizeBytes
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
