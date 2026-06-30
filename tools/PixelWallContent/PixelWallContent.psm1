@@ -49,6 +49,57 @@ function Assert-ContentName {
     }
 }
 
+function ConvertTo-RepositoryRelativePath {
+    param(
+        [string]$Path,
+        [string]$RootPath
+    )
+
+    $resolvedRoot = [System.IO.Path]::GetFullPath($RootPath).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $resolvedPath = [System.IO.Path]::GetFullPath($Path)
+    $rootWithSeparator = $resolvedRoot + [System.IO.Path]::DirectorySeparatorChar
+    if ($resolvedPath.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $resolvedPath.Substring($rootWithSeparator.Length).Replace([System.IO.Path]::DirectorySeparatorChar, "/")
+    }
+
+    return [System.IO.Path]::GetFileName($resolvedPath)
+}
+
+function ConvertTo-UrlPath {
+    param([string]$Path)
+
+    return (($Path -split "/") | ForEach-Object { [System.Uri]::EscapeDataString($_) }) -join "/"
+}
+
+function Resolve-GitHubSourceTreeBaseUrl {
+    param(
+        [string]$RepositoryUrl,
+        [string]$SourceRef
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RepositoryUrl)) {
+        $RepositoryUrl = $env:PIXEL_WALL_CONTENT_REPOSITORY_URL
+    }
+    if ([string]::IsNullOrWhiteSpace($RepositoryUrl) -and ![string]::IsNullOrWhiteSpace($env:GITHUB_SERVER_URL) -and ![string]::IsNullOrWhiteSpace($env:GITHUB_REPOSITORY)) {
+        $RepositoryUrl = "$($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)"
+    }
+    if ([string]::IsNullOrWhiteSpace($RepositoryUrl)) {
+        return $null
+    }
+
+    if ([string]::IsNullOrWhiteSpace($SourceRef)) {
+        $SourceRef = $env:PIXEL_WALL_CONTENT_SOURCE_REF
+    }
+    if ([string]::IsNullOrWhiteSpace($SourceRef)) {
+        $SourceRef = $env:GITHUB_REF_NAME
+    }
+    if ([string]::IsNullOrWhiteSpace($SourceRef)) {
+        $SourceRef = "main"
+    }
+
+    return "$($RepositoryUrl.TrimEnd("/") -replace '\.git$', '')/tree/$([System.Uri]::EscapeDataString($SourceRef))"
+}
+
 function ConvertTo-DimensionParts {
     param([string]$Dimensions)
 
@@ -162,7 +213,8 @@ function Write-ContentIndexHtml {
         }
 
         header,
-        main {
+        main,
+        footer {
             width: min(1120px, calc(100% - 32px));
             margin: 0 auto;
         }
@@ -226,6 +278,8 @@ function Write-ContentIndexHtml {
         }
 
         .manifest-title a,
+        .links a,
+        footer a,
         .details a {
             color: var(--accent-strong);
             font-weight: 700;
@@ -233,8 +287,17 @@ function Write-ContentIndexHtml {
         }
 
         .manifest-title a:hover,
+        .links a:hover,
+        footer a:hover,
         .details a:hover {
             text-decoration: underline;
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.9rem;
         }
 
         ol {
@@ -296,9 +359,16 @@ function Write-ContentIndexHtml {
             font-size: 0.9rem;
         }
 
+        footer {
+            padding: 4px 0 36px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
         @media (max-width: 560px) {
             header,
-            main {
+            main,
+            footer {
                 width: min(100% - 20px, 1120px);
             }
 
@@ -314,6 +384,9 @@ function Write-ContentIndexHtml {
         <div class="summary" id="summary"></div>
     </header>
     <main id="manifests"></main>
+    <footer>
+        <p>Preview rendered from deployed .bin bytes.</p>
+    </footer>
     <script id="content-data" type="application/json">
 '@
 
@@ -379,6 +452,19 @@ function Write-ContentIndexHtml {
             link.textContent = animation.name;
             heading.append(link);
 
+            const detailNodes = [heading];
+            if (animation.githubUrl) {
+                const links = document.createElement("div");
+                links.className = "links";
+                const githubLink = document.createElement("a");
+                githubLink.href = animation.githubUrl;
+                githubLink.textContent = "GitHub source";
+                githubLink.target = "_blank";
+                githubLink.rel = "noreferrer";
+                links.append(githubLink);
+                detailNodes.push(links);
+            }
+
             const meta = document.createElement("div");
             meta.className = "meta";
             meta.append(
@@ -394,7 +480,8 @@ function Write-ContentIndexHtml {
             status.className = "status";
             status.textContent = "Loading preview...";
 
-            details.append(heading, meta, status);
+            detailNodes.push(meta, status);
+            details.append(...detailNodes);
             card.append(canvas, details);
             item.append(card);
             renderAnimationPreview(animation, canvas, status);
@@ -413,7 +500,8 @@ function Write-ContentIndexHtml {
                 const delay = Math.max(20, Math.round(1000 / Math.max(1, decoded.fps)));
                 let frame = 0;
                 drawFrame(context, decoded, frame);
-                status.textContent = "Preview rendered from deployed .bin bytes.";
+                status.textContent = "";
+                status.hidden = true;
 
                 if (decoded.frames.length > 1) {
                     window.setInterval(() => {
@@ -422,6 +510,7 @@ function Write-ContentIndexHtml {
                     }, delay);
                 }
             } catch (error) {
+                status.hidden = false;
                 status.textContent = `Preview unavailable: ${error.message}`;
             }
         }
@@ -673,6 +762,10 @@ function Publish-PixelWallAnimationContent {
 
         [string]$DimensionMapPath,
 
+        [string]$RepositoryUrl,
+
+        [string]$SourceRef,
+
         [switch]$Recurse,
 
         [switch]$Clean,
@@ -702,6 +795,9 @@ function Publish-PixelWallAnimationContent {
         throw "No .bin files found in $resolvedInput"
     }
 
+    $repositoryRoot = (Get-Location).ProviderPath
+    $githubSourceTreeBaseUrl = Resolve-GitHubSourceTreeBaseUrl -RepositoryUrl $RepositoryUrl -SourceRef $SourceRef
+
     if ($Clean -and (Test-Path $OutputPath)) {
         Remove-Item -Path $OutputPath -Recurse -Force
     }
@@ -719,6 +815,11 @@ function Publish-PixelWallAnimationContent {
 
         $info = Get-PixelWallAnimationBinInfo -Path $file.FullName -DimensionMap $dimensionMap
         Assert-ContentName $info.Name
+        $sourcePath = ConvertTo-RepositoryRelativePath -Path $file.FullName -RootPath $repositoryRoot
+        $info | Add-Member -NotePropertyName SourcePath -NotePropertyValue $sourcePath
+        if (![string]::IsNullOrWhiteSpace($githubSourceTreeBaseUrl)) {
+            $info | Add-Member -NotePropertyName GitHubUrl -NotePropertyValue "$githubSourceTreeBaseUrl/$(ConvertTo-UrlPath $sourcePath)"
+        }
         if ($seenNames.ContainsKey($info.Name)) {
             throw "Duplicate animation name '$($info.Name)' from $($file.FullName) and $($seenNames[$info.Name])."
         }
@@ -747,7 +848,7 @@ function Publish-PixelWallAnimationContent {
         schemaVersion = 1
         buckets = $buckets
         animations = @($infos | Sort-Object Dimensions, Name | ForEach-Object {
-            [ordered]@{
+            $animation = [ordered]@{
                 name = $_.Name
                 dimensions = $_.Dimensions
                 width = $_.Width
@@ -757,7 +858,12 @@ function Publish-PixelWallAnimationContent {
                 paletteColors = $_.PaletteColorCount
                 bytes = $_.SizeBytes
                 path = "animations/$($_.Name).bin"
+                sourcePath = $_.SourcePath
             }
+            if (![string]::IsNullOrWhiteSpace($_.GitHubUrl)) {
+                $animation.githubUrl = $_.GitHubUrl
+            }
+            $animation
         })
     }
 

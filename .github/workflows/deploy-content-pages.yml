@@ -35,6 +35,9 @@ jobs:
 
       - name: Build content tree
         shell: pwsh
+        env:
+          PIXEL_WALL_CONTENT_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+          PIXEL_WALL_CONTENT_SOURCE_REF: ${{ github.ref_name }}
         run: |
           Import-Module ./tools/PixelWallContent/PixelWallContent.psm1
           Publish-PixelWallAnimationContent -InputPath ./assets/processed -OutputPath ./_site -Clean -Recurse -PassThru |
