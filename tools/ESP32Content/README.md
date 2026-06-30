@@ -34,7 +34,7 @@ _site/
   content-index.json
 ```
 
-Manifest files follow `CONTENT_SERVER_FORMAT.md`: each `manifest/<dimensions>` file contains the animation names for that display size, and the firmware downloads raw bytes from `animations/<name>.bin`. The generated `index.html` lists the manifests in bucket order, keeps each manifest list in order, and renders browser previews from the deployed `.bin` bytes.
+Manifest files follow `CONTENT_SERVER_FORMAT.md`: each `manifest/<dimensions>` file contains the animation names for that display size, and the firmware downloads raw bytes from `animations/<name>.bin`. The generated `index.html` lists the manifests in bucket order, keeps each manifest list in order, shows zero-based `image_index` values, and renders browser previews from the deployed `.bin` bytes.
 
 For non-square animations, add `assets/processed/dimensions.json`:
 

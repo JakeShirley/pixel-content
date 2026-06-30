@@ -343,12 +343,13 @@ function Write-ContentIndexHtml {
             title.append(heading, link, chip(`${names.length} item${names.length === 1 ? "" : "s"}`));
 
             const list = document.createElement("ol");
-            for (const name of names) {
+            list.start = 0;
+            names.forEach((name, imageIndex) => {
                 const animation = animationsByName.get(name);
                 if (animation) {
-                    list.append(animationCard(animation));
+                    list.append(animationCard(animation, imageIndex));
                 }
-            }
+            });
 
             section.append(title, list);
             manifests.append(section);
@@ -360,7 +361,7 @@ function Write-ContentIndexHtml {
             return element;
         }
 
-        function animationCard(animation) {
+        function animationCard(animation, imageIndex) {
             const item = document.createElement("li");
             const card = document.createElement("article");
             card.className = "animation-card";
@@ -381,6 +382,7 @@ function Write-ContentIndexHtml {
             const meta = document.createElement("div");
             meta.className = "meta";
             meta.append(
+                chip(`image_index ${imageIndex}`),
                 chip(animation.dimensions),
                 chip(`${animation.frames} frames`),
                 chip(`${animation.fps} fps`),
