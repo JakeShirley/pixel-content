@@ -1,0 +1,358 @@
+:root {
+  --ink: #172018;
+  --muted: #60715f;
+  --paper: #f7f2e8;
+  --panel: #fffaf0;
+  --line: #d8cab4;
+  --accent: #1b7f6e;
+  --accent-strong: #105f54;
+  --warm: #b75f32;
+  --shadow: 0 18px 60px rgba(67, 48, 27, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 214, 122, 0.32), transparent 26rem),
+    linear-gradient(135deg, #edf4e8 0%, #f7f2e8 48%, #ece0cf 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: #fff8ea;
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.shell {
+  width: min(1220px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 26px 0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.stagePanel,
+.controlsPanel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 250, 240, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.stagePanel {
+  min-width: 0;
+  padding: 18px;
+}
+
+.stageHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--warm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+h2 {
+  font-size: 1rem;
+}
+
+.filePicker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 7px;
+  color: #fff;
+  background: var(--accent);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filePicker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.canvasShell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2f3a30;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.08) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.08) 75%);
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  background-size: 20px 20px;
+}
+
+#sourceCanvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  touch-action: none;
+}
+
+.emptyState {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.timeline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.toolButton {
+  min-width: 70px;
+  min-height: 36px;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.controlsPanel {
+  padding: 16px;
+}
+
+.controlBlock + .controlBlock,
+.exportBlock {
+  margin-top: 18px;
+}
+
+.controlBlock {
+  border-bottom: 1px solid rgba(216, 202, 180, 0.75);
+  padding-bottom: 16px;
+}
+
+.grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+input[type="number"],
+input[type="color"],
+select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: #fffdf7;
+}
+
+input[type="number"] {
+  padding: 0 10px;
+}
+
+select {
+  padding: 0 10px;
+}
+
+input[type="color"] {
+  padding: 3px;
+}
+
+.buttonRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.buttonRow button {
+  min-height: 36px;
+}
+
+.checkLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.selectLine {
+  margin-top: 12px;
+}
+
+.checkLine input {
+  accent-color: var(--accent);
+}
+
+#maxFrames {
+  margin-top: 8px;
+}
+
+.wideButton {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 10px;
+}
+
+.paletteSwatches {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 3px;
+  min-height: 42px;
+  margin-top: 12px;
+}
+
+.swatch {
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+}
+
+.exportButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.exportButton {
+  width: 100%;
+  min-height: 48px;
+  border-color: var(--accent-strong);
+  color: #fff;
+  background: var(--accent-strong);
+  font-weight: 700;
+}
+
+.exportButton.secondary {
+  color: var(--ink);
+  background: #fff8ea;
+}
+
+.status {
+  min-height: 116px;
+  margin: 12px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: #253028;
+  background: #fffdf7;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.dropReady .canvasShell {
+  outline: 3px solid rgba(27, 127, 110, 0.36);
+}
+
+@media (max-width: 940px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .controlsPanel {
+    order: -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .shell {
+    width: min(100vw - 20px, 1220px);
+    padding: 10px 0;
+  }
+
+  .stageHead,
+  .timeline {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .filePicker,
+  .toolButton,
+  .exportButtons {
+    width: 100%;
+  }
+
+  .exportButtons {
+    grid-template-columns: 1fr;
+  }
+
+  .grid.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
