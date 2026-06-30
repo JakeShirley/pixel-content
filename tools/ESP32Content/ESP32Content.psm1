@@ -120,6 +120,398 @@ function Read-DimensionMap {
     return $map
 }
 
+function Write-ContentIndexHtml {
+        param(
+                [string]$OutputPath,
+                [hashtable]$Index
+        )
+
+        $contentJson = $Index | ConvertTo-Json -Depth 8
+        $htmlStart = @'
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ESP32 Animation Content</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #17211d;
+            --muted: #5d6962;
+            --line: #d8ded8;
+            --panel: #ffffff;
+            --page: #f3f0e7;
+            --accent: #126f62;
+            --accent-strong: #0a4d45;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background:
+                linear-gradient(135deg, rgba(18, 111, 98, 0.10), transparent 34rem),
+                radial-gradient(circle at top right, rgba(232, 169, 73, 0.16), transparent 26rem),
+                var(--page);
+            font-family: "Aptos", "Segoe UI", sans-serif;
+            line-height: 1.45;
+        }
+
+        header,
+        main {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        header {
+            padding: 40px 0 24px;
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 6vw, 4rem);
+            line-height: 0.95;
+            max-width: 760px;
+        }
+
+        .summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .summary span,
+        .meta span,
+        .manifest-title span {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.68);
+            padding: 6px 10px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        main {
+            display: grid;
+            gap: 28px;
+            padding: 0 0 40px;
+        }
+
+        section {
+            display: grid;
+            gap: 14px;
+        }
+
+        .manifest-title {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 10px;
+            padding-top: 10px;
+        }
+
+        .manifest-title h2 {
+            font-size: 1.45rem;
+        }
+
+        .manifest-title a,
+        .details a {
+            color: var(--accent-strong);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .manifest-title a:hover,
+        .details a:hover {
+            text-decoration: underline;
+        }
+
+        ol {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            list-style-position: inside;
+            margin: 0;
+            padding: 0;
+        }
+
+        li::marker {
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .animation-card {
+            display: grid;
+            grid-template-columns: minmax(72px, 104px) 1fr;
+            gap: 12px;
+            min-height: 128px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.82);
+            padding: 12px;
+            box-shadow: 0 12px 30px rgba(23, 33, 29, 0.08);
+        }
+
+        canvas {
+            width: 100%;
+            aspect-ratio: 1;
+            align-self: start;
+            border: 1px solid #c9d2cc;
+            border-radius: 4px;
+            background: #151a17;
+            image-rendering: pixelated;
+        }
+
+        .details {
+            display: grid;
+            align-content: start;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .details h3 {
+            overflow-wrap: anywhere;
+            font-size: 1.05rem;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .status {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 560px) {
+            header,
+            main {
+                width: min(100% - 20px, 1120px);
+            }
+
+            .animation-card {
+                grid-template-columns: 88px 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ESP32 Animation Content</h1>
+        <div class="summary" id="summary"></div>
+    </header>
+    <main id="manifests"></main>
+    <script id="content-data" type="application/json">
+'@
+
+        $htmlEnd = @'
+    </script>
+    <script>
+        const content = JSON.parse(document.getElementById("content-data").textContent);
+        const animationsByName = new Map(content.animations.map((animation) => [animation.name, animation]));
+        const summary = document.getElementById("summary");
+        const manifests = document.getElementById("manifests");
+
+        summary.append(
+            chip(`${content.animations.length} animation${content.animations.length === 1 ? "" : "s"}`),
+            chip(`${Object.keys(content.buckets).length} manifest${Object.keys(content.buckets).length === 1 ? "" : "s"}`)
+        );
+
+        for (const [dimensions, names] of Object.entries(content.buckets)) {
+            const section = document.createElement("section");
+            const title = document.createElement("div");
+            title.className = "manifest-title";
+
+            const heading = document.createElement("h2");
+            heading.textContent = dimensions;
+            const link = document.createElement("a");
+            link.href = `manifest/${dimensions}`;
+            link.textContent = `manifest/${dimensions}`;
+            title.append(heading, link, chip(`${names.length} item${names.length === 1 ? "" : "s"}`));
+
+            const list = document.createElement("ol");
+            for (const name of names) {
+                const animation = animationsByName.get(name);
+                if (animation) {
+                    list.append(animationCard(animation));
+                }
+            }
+
+            section.append(title, list);
+            manifests.append(section);
+        }
+
+        function chip(text) {
+            const element = document.createElement("span");
+            element.textContent = text;
+            return element;
+        }
+
+        function animationCard(animation) {
+            const item = document.createElement("li");
+            const card = document.createElement("article");
+            card.className = "animation-card";
+
+            const canvas = document.createElement("canvas");
+            canvas.width = animation.width;
+            canvas.height = animation.height;
+            canvas.setAttribute("aria-label", `${animation.name} preview`);
+
+            const details = document.createElement("div");
+            details.className = "details";
+            const heading = document.createElement("h3");
+            const link = document.createElement("a");
+            link.href = animation.path;
+            link.textContent = animation.name;
+            heading.append(link);
+
+            const meta = document.createElement("div");
+            meta.className = "meta";
+            meta.append(
+                chip(animation.dimensions),
+                chip(`${animation.frames} frames`),
+                chip(`${animation.fps} fps`),
+                chip(`${animation.paletteColors} colors`),
+                chip(`${animation.bytes.toLocaleString()} bytes`)
+            );
+
+            const status = document.createElement("p");
+            status.className = "status";
+            status.textContent = "Loading preview...";
+
+            details.append(heading, meta, status);
+            card.append(canvas, details);
+            item.append(card);
+            renderAnimationPreview(animation, canvas, status);
+            return item;
+        }
+
+        async function renderAnimationPreview(animation, canvas, status) {
+            try {
+                const response = await fetch(animation.path);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const decoded = decodeAnimationBinary(new Uint8Array(await response.arrayBuffer()), animation.width, animation.height);
+                const context = canvas.getContext("2d");
+                const delay = Math.max(20, Math.round(1000 / Math.max(1, decoded.fps)));
+                let frame = 0;
+                drawFrame(context, decoded, frame);
+                status.textContent = "Preview rendered from deployed .bin bytes.";
+
+                if (decoded.frames.length > 1) {
+                    window.setInterval(() => {
+                        frame = (frame + 1) % decoded.frames.length;
+                        drawFrame(context, decoded, frame);
+                    }, delay);
+                }
+            } catch (error) {
+                status.textContent = `Preview unavailable: ${error.message}`;
+            }
+        }
+
+        function decodeAnimationBinary(bytes, width, height) {
+            if (bytes.length < 10) {
+                throw new Error("file is smaller than the header");
+            }
+
+            const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+            const frameCount = view.getUint16(0, true);
+            const fps = view.getUint8(3);
+            const paletteBytes = view.getUint16(4, true);
+            const frameBytes = view.getUint32(6, true);
+            const totalPixels = width * height;
+            const palette = [];
+            let offset = 10;
+            for (let index = 0; index < paletteBytes; index += 3) {
+                palette.push([bytes[offset + index], bytes[offset + index + 1], bytes[offset + index + 2]]);
+            }
+
+            offset += paletteBytes;
+            const frameEnd = offset + frameBytes;
+            const frames = [];
+            let current = null;
+            while (offset < frameEnd) {
+                const record = bytes[offset];
+                offset += 1;
+                if (record === 0x49) {
+                    const pixelCount = readU16BE(bytes, offset);
+                    offset += 2;
+                    current = new Uint8Array(totalPixels);
+                    current.set(bytes.subarray(offset, offset + pixelCount), 0);
+                    offset += pixelCount;
+                    frames.push(current.slice());
+                } else if (record === 0x50) {
+                    if (!current) {
+                        throw new Error("predictive frame before keyframe");
+                    }
+                    const changedPixels = readU16BE(bytes, offset);
+                    offset += 2;
+                    const positionBytes = totalPixels > 256 ? 2 : 1;
+                    const next = current.slice();
+                    for (let index = 0; index < changedPixels; index += 1) {
+                        const position = positionBytes === 2 ? readU16BE(bytes, offset) : bytes[offset];
+                        offset += positionBytes;
+                        next[position] = bytes[offset];
+                        offset += 1;
+                    }
+                    current = next;
+                    frames.push(current.slice());
+                } else if (record === 0x44 || record === 0x46) {
+                    offset += 2;
+                } else {
+                    throw new Error(`unknown record 0x${record.toString(16)}`);
+                }
+            }
+
+            if (frames.length !== frameCount) {
+                throw new Error(`decoded ${frames.length} of ${frameCount} frames`);
+            }
+
+            return { fps, palette, frames, width, height };
+        }
+
+        function drawFrame(context, decoded, frameIndex) {
+            const image = context.createImageData(decoded.width, decoded.height);
+            const frame = decoded.frames[frameIndex];
+            for (let pixel = 0; pixel < frame.length; pixel += 1) {
+                const color = decoded.palette[frame[pixel]] || [0, 0, 0];
+                const offset = pixel * 4;
+                image.data[offset] = color[0];
+                image.data[offset + 1] = color[1];
+                image.data[offset + 2] = color[2];
+                image.data[offset + 3] = 255;
+            }
+            context.putImageData(image, 0, 0);
+        }
+
+        function readU16BE(bytes, offset) {
+            return (bytes[offset] << 8) | bytes[offset + 1];
+        }
+    </script>
+</body>
+</html>
+'@
+
+        $indexHtmlPath = Join-Path $OutputPath "index.html"
+        Set-Content -Path $indexHtmlPath -Value ($htmlStart + "`n" + $contentJson + "`n" + $htmlEnd) -Encoding utf8
+        return $indexHtmlPath
+}
+
 function Get-ESP32AnimationBinInfo {
     [CmdletBinding()]
     param(
@@ -372,6 +764,11 @@ function Publish-ESP32AnimationContent {
         $index | ConvertTo-Json -Depth 8 | Set-Content -Path $indexPath -Encoding utf8
     }
 
+    $indexHtmlPath = Join-Path $OutputPath "index.html"
+    if ($PSCmdlet.ShouldProcess($indexHtmlPath, "Write HTML index")) {
+        $indexHtmlPath = Write-ContentIndexHtml -OutputPath $OutputPath -Index $index
+    }
+
     if ($PassThru) {
         $infos
     } else {
@@ -380,6 +777,7 @@ function Publish-ESP32AnimationContent {
             AnimationCount = $infos.Count
             Dimensions = @($buckets.Keys)
             IndexPath = (Resolve-Path $indexPath).ProviderPath
+            IndexHtmlPath = (Resolve-Path $indexHtmlPath).ProviderPath
         }
     }
 }
