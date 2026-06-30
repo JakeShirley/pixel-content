@@ -6,6 +6,12 @@
   const DEFAULT_FPS = 10;
   const DEFAULT_MAX_FRAMES = 21;
   const DEFAULT_MAX_COLORS = 128;
+  const DEFAULT_OUTPUT_SIZE = "64x64";
+  const OUTPUT_SIZES = new Map([
+    ["64x64", { width: 64, height: 64 }],
+    ["32x64", { width: 32, height: 64 }],
+    ["128x128", { width: 128, height: 128 }],
+  ]);
   const ANIMATION_HEADER_BYTES = 10;
 
   const state = {
@@ -38,8 +44,7 @@
     fitCrop: document.getElementById("fitCrop"),
     squareCrop: document.getElementById("squareCrop"),
     centerCrop: document.getElementById("centerCrop"),
-    outputW: document.getElementById("outputW"),
-    outputH: document.getElementById("outputH"),
+    outputSize: document.getElementById("outputSize"),
     fps: document.getElementById("fps"),
     loopCount: document.getElementById("loopCount"),
     predictiveMode: document.getElementById("predictiveMode"),
@@ -74,6 +79,15 @@
     els.exportBin.disabled = true;
     els.exportGif.disabled = true;
     setStatus(message);
+  }
+
+  function selectedOutputSize() {
+    return OUTPUT_SIZES.get(els.outputSize.value) || OUTPUT_SIZES.get(DEFAULT_OUTPUT_SIZE);
+  }
+
+  function setOutputSize(width, height) {
+    const match = Array.from(OUTPUT_SIZES.entries()).find(([, size]) => size.width === width && size.height === height);
+    els.outputSize.value = match ? match[0] : DEFAULT_OUTPUT_SIZE;
   }
 
   function setLoadedControls(enabled, frameCount) {
@@ -293,8 +307,7 @@
   }
 
   function inferDimensions(totalPixels) {
-    const requestedWidth = toInt(els.outputW, 64);
-    const requestedHeight = toInt(els.outputH, 64);
+    const { width: requestedWidth, height: requestedHeight } = selectedOutputSize();
     if (requestedWidth * requestedHeight === totalPixels) {
       return { width: requestedWidth, height: requestedHeight };
     }
@@ -458,8 +471,7 @@
     state.sourceHeight = decoded.height;
     resizeCanvasToSource(decoded.width, decoded.height);
 
-    els.outputW.value = String(decoded.width);
-    els.outputH.value = String(decoded.height);
+    setOutputSize(decoded.width, decoded.height);
     els.fps.value = String(decoded.fps);
     els.loopCount.value = String(decoded.loopCount);
     els.maxColors.value = String(decoded.palette.length);
@@ -501,7 +513,8 @@
     setLoadedControls(decoded.frames.length > 0, decoded.frames.length);
 
     els.fps.value = String(Math.min(sourceFps(decoded.frames), DEFAULT_FPS));
-    setCrop(fitCropToAspect(decoded.width, decoded.height, toInt(els.outputW, 64), toInt(els.outputH, 64)));
+    const outputSize = selectedOutputSize();
+    setCrop(fitCropToAspect(decoded.width, decoded.height, outputSize.width, outputSize.height));
     setFrame(0);
     updateStatusPreview();
   }
@@ -538,8 +551,7 @@
       return;
     }
 
-    const outputWidth = toInt(els.outputW, 64);
-    const outputHeight = toInt(els.outputH, 64);
+    const { width: outputWidth, height: outputHeight } = selectedOutputSize();
     const count = selectedFrameIndices().length;
     const totalPixels = outputWidth * outputHeight;
     const estimatedWrites = totalPixels * toInt(els.fps, DEFAULT_FPS);
@@ -589,8 +601,7 @@
   }
 
   function renderExportFrames() {
-    const outputWidth = clamp(toInt(els.outputW, 64), 1, 255);
-    const outputHeight = clamp(toInt(els.outputH, 64), 1, 255);
+    const { width: outputWidth, height: outputHeight } = selectedOutputSize();
     const totalPixels = outputWidth * outputHeight;
     if (totalPixels > MAX_PIXELS) {
       throw new Error(`Output has ${totalPixels} pixels; firmware limit is ${MAX_PIXELS}.`);
@@ -1121,7 +1132,13 @@
     if (!state.sourceWidth || !state.sourceHeight) {
       return;
     }
-    setCrop(fitCropToAspect(state.sourceWidth, state.sourceHeight, toInt(els.outputW, 64), toInt(els.outputH, 64)));
+    const outputSize = selectedOutputSize();
+    setCrop(fitCropToAspect(state.sourceWidth, state.sourceHeight, outputSize.width, outputSize.height));
+    updateStatusPreview();
+  }
+
+  function syncOutputSize() {
+    fitCrop();
     updateStatusPreview();
   }
 
@@ -1158,6 +1175,7 @@
   }
 
   function applyPanelDefaults() {
+    els.outputSize.value = DEFAULT_OUTPUT_SIZE;
     els.fps.value = String(DEFAULT_FPS);
     els.limitFrames.checked = true;
     els.maxFrames.disabled = false;
@@ -1176,9 +1194,10 @@
     });
 
     [els.cropX, els.cropY, els.cropW, els.cropH].forEach((input) => input.addEventListener("input", syncCropFromInputs));
-    [els.outputW, els.outputH, els.fps, els.loopCount, els.maxColors, els.background].forEach((input) => {
+    [els.fps, els.loopCount, els.maxColors, els.background].forEach((input) => {
       input.addEventListener("input", updateStatusPreview);
     });
+    els.outputSize.addEventListener("change", syncOutputSize);
     els.predictiveMode.addEventListener("change", updateStatusPreview);
     els.limitFrames.addEventListener("change", () => {
       els.maxFrames.disabled = !els.limitFrames.checked;
