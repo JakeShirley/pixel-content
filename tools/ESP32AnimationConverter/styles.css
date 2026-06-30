@@ -124,6 +124,7 @@ h2 {
 
 .canvasShell {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   border: 1px solid #2f3a30;
   border-radius: 8px;
@@ -143,6 +144,28 @@ h2 {
   touch-action: none;
 }
 
+.pixelGridOverlay {
+  --grid-columns: 64;
+  --grid-rows: 64;
+  --major-grid-columns: 8;
+  --major-grid-rows: 8;
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  opacity: 0.52;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.58) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.58) 1px, transparent 1px);
+  background-size:
+    calc(100% / var(--grid-columns)) 100%,
+    100% calc(100% / var(--grid-rows)),
+    calc(100% / var(--major-grid-columns)) 100%,
+    100% calc(100% / var(--major-grid-rows));
+}
+
 .emptyState {
   position: absolute;
   inset: 0;
@@ -151,6 +174,11 @@ h2 {
   color: var(--muted);
   font-size: 1.1rem;
   pointer-events: none;
+}
+
+.emptyState[hidden],
+.pixelGridOverlay[hidden] {
+  display: none;
 }
 
 .timeline {

@@ -41,6 +41,7 @@
     cropY: document.getElementById("cropY"),
     cropW: document.getElementById("cropW"),
     cropH: document.getElementById("cropH"),
+    pixelGridOverlay: document.getElementById("pixelGridOverlay"),
     fitCrop: document.getElementById("fitCrop"),
     squareCrop: document.getElementById("squareCrop"),
     centerCrop: document.getElementById("centerCrop"),
@@ -132,9 +133,38 @@
     els.canvas.height = height;
   }
 
+  function gridLineStep(crop, outputWidth, outputHeight) {
+    const rect = els.canvas.getBoundingClientRect();
+    const cellCssWidth = rect.width ? (crop.width / els.canvas.width) * rect.width / outputWidth : 8;
+    const cellCssHeight = rect.height ? (crop.height / els.canvas.height) * rect.height / outputHeight : 8;
+    let step = 1;
+    while (Math.min(cellCssWidth * step, cellCssHeight * step) < 4 && step < Math.max(outputWidth, outputHeight)) {
+      step *= 2;
+    }
+    return step;
+  }
+
+  function updatePixelGridOverlay(crop) {
+    const { width: outputWidth, height: outputHeight } = selectedOutputSize();
+    const step = gridLineStep(crop, outputWidth, outputHeight);
+    const majorStep = Math.max(8, step);
+    const overlay = els.pixelGridOverlay;
+
+    overlay.hidden = false;
+    overlay.style.left = `${(crop.x / els.canvas.width) * 100}%`;
+    overlay.style.top = `${(crop.y / els.canvas.height) * 100}%`;
+    overlay.style.width = `${(crop.width / els.canvas.width) * 100}%`;
+    overlay.style.height = `${(crop.height / els.canvas.height) * 100}%`;
+    overlay.style.setProperty("--grid-columns", String(outputWidth / step));
+    overlay.style.setProperty("--grid-rows", String(outputHeight / step));
+    overlay.style.setProperty("--major-grid-columns", String(outputWidth / majorStep));
+    overlay.style.setProperty("--major-grid-rows", String(outputHeight / majorStep));
+  }
+
   function drawPreview() {
     ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
     if (!state.frames.length) {
+      els.pixelGridOverlay.hidden = true;
       return;
     }
 
@@ -147,6 +177,7 @@
     ctx.rect(0, 0, els.canvas.width, els.canvas.height);
     ctx.rect(crop.x, crop.y, crop.width, crop.height);
     ctx.fill("evenodd");
+    updatePixelGridOverlay(crop);
     ctx.strokeStyle = "#fff6dc";
     ctx.lineWidth = Math.max(2, Math.round(Math.min(els.canvas.width, els.canvas.height) / 180));
     ctx.strokeRect(crop.x + 0.5, crop.y + 0.5, crop.width - 1, crop.height - 1);
@@ -1182,6 +1213,7 @@
     els.maxFrames.value = String(DEFAULT_MAX_FRAMES);
     els.maxColors.value = String(DEFAULT_MAX_COLORS);
     els.predictiveMode.value = "writes";
+    drawPreview();
     updateStatusPreview();
   }
 
