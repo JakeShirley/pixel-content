@@ -1,8 +1,8 @@
-# ESP32 Animation Converter
+# Pixel Wall Animation Converter
 
-Static browser tool for converting between GIFs and the raw Expressive Pixels animation sequence format consumed by `CustomESP32Firmware`.
+Static browser tool for converting between GIFs and the raw Expressive Pixels animation sequence format consumed by Pixel Wall firmware.
 
-Open `index.html` in a browser, import a GIF, crop it, choose one of the fixed output sizes, choose a predictive encoding mode, and export a `.bin` file. Supported output sizes are 64 x 64, 64 x 32, and 128 x 128, with 64 x 64 selected by default. You can also import an existing `.bin` file to preview it, export the original `.bin` bytes losslessly, or recreate a paletted animated GIF from the decoded frame stream. Defaults are tuned for the ESP32 HUB75 player: 10 fps, 21 sampled frames, 128 colors, and predictive frame records.
+Open `index.html` in a browser, import a GIF, crop it, choose one of the fixed output sizes, choose a predictive encoding mode, and export a `.bin` file. Supported output sizes are 64 x 64, 64 x 32, and 128 x 128, with 64 x 64 selected by default. You can also import an existing `.bin` file to preview it, export the original `.bin` bytes losslessly, or recreate a paletted animated GIF from the decoded frame stream. Defaults are tuned for the Pixel Wall HUB75 player: 10 fps, 21 sampled frames, 128 colors, and predictive frame records.
 
 Predictive encoding modes:
 
@@ -22,4 +22,4 @@ When a `.bin` file is imported, `Export .bin` preserves the original bytes for a
 
 The tool uses `gifuct-js` from jsDelivr at runtime to decode GIF frames. If the page is opened without internet access, serve or vendor that dependency first.
 
-Copy exported files into `CustomESP32Firmware/data/animations/` and add them to `animations.lst` when they need an ID alias.
+Copy exported files into the firmware data folder (`PixelWallFirmware/data/animations/`) and add them to `animations.lst` when they need an ID alias.

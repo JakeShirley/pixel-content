@@ -1,6 +1,6 @@
-# ESP32 Dynamic Content Server Format
+# Pixel Wall Dynamic Content Server Format
 
-This document describes the HTTP data shape consumed by `CustomESP32Firmware` when the device runs `update-now`.
+This document describes the HTTP data shape consumed by Pixel Wall firmware when the device runs `update-now`.
 
 ## Base URL
 
@@ -171,4 +171,4 @@ second-demo
 badge-32
 ```
 
-When serving this tree at `http://192.168.1.10:8000`, a 64 x 64 ESP32 running `update-now http://192.168.1.10:8000` downloads either `animations/new-demo.bin` or `animations/second-demo.bin` depending on `image_index`.
+When serving this tree at `http://192.168.1.10:8000`, a 64 x 64 Pixel Wall device running `update-now http://192.168.1.10:8000` downloads either `animations/new-demo.bin` or `animations/second-demo.bin` depending on `image_index`.

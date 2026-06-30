@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render ESP32 Expressive Pixels .bin animations as PNG sprite sheets."""
+"""Render Pixel Wall .bin animations as PNG sprite sheets."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ class DecodedAnimation:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Decode an ESP32 Expressive Pixels animation .bin and write a PNG sprite sheet."
+        description="Decode a Pixel Wall animation .bin and write a PNG sprite sheet."
     )
     parser.add_argument("input", type=Path, help="Animation .bin file to decode.")
     parser.add_argument("--output", "-o", type=Path, help="Output PNG path. Default: <input>-spritesheet.png")

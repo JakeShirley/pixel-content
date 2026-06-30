@@ -2,7 +2,7 @@
 param(
     [int]$Port = 8000,
     [string]$ContentPath,
-    [string]$SourceAnimation = (Join-Path $PSScriptRoot "..\CustomESP32Firmware\data\animations\jeb-tiny-jens.bin"),
+    [string]$SourceAnimation = (Join-Path $PSScriptRoot "..\PixelWallFirmware\data\animations\jeb-tiny-jens.bin"),
     [string]$Name = "dynamic-test",
     [string]$Dimensions = "64x64",
     [string]$ServeRoot = (Join-Path $PSScriptRoot ".content-update-server")
@@ -146,7 +146,7 @@ if (![string]::IsNullOrWhiteSpace($ContentPath)) {
         } else {
             Initialize-GeneratedServeRoot
             $manifestLines = [System.Collections.Generic.List[string]]::new()
-            $manifestLines.Add("# ESP32 dynamic content test manifest")
+            $manifestLines.Add("# Pixel Wall dynamic content test manifest")
             foreach ($animation in @(Get-BinFilesForContentDirectory $resolvedContentPath)) {
                 $contentName = [System.IO.Path]::GetFileNameWithoutExtension($animation.Name)
                 Add-ManifestEntry -ManifestLines $manifestLines -InputPath $animation.FullName -ContentName $contentName -ContentDimensions $Dimensions
@@ -162,7 +162,7 @@ if (![string]::IsNullOrWhiteSpace($ContentPath)) {
 
         Initialize-GeneratedServeRoot
         $manifestLines = [System.Collections.Generic.List[string]]::new()
-        $manifestLines.Add("# ESP32 dynamic content test manifest")
+        $manifestLines.Add("# Pixel Wall dynamic content test manifest")
         $contentName = if ($PSBoundParameters.ContainsKey("Name")) { $Name } else { [System.IO.Path]::GetFileNameWithoutExtension((Split-Path $resolvedContentPath -Leaf)) }
         Add-ManifestEntry -ManifestLines $manifestLines -InputPath $resolvedContentPath -ContentName $contentName -ContentDimensions $Dimensions
         $playNames.Add($contentName)
@@ -171,7 +171,7 @@ if (![string]::IsNullOrWhiteSpace($ContentPath)) {
 } else {
     Initialize-GeneratedServeRoot
     $manifestLines = [System.Collections.Generic.List[string]]::new()
-    $manifestLines.Add("# ESP32 dynamic content test manifest")
+    $manifestLines.Add("# Pixel Wall dynamic content test manifest")
 
     Add-ManifestEntry -ManifestLines $manifestLines -InputPath $SourceAnimation -ContentName $Name -ContentDimensions $Dimensions
     $playNames.Add($Name)
@@ -188,7 +188,7 @@ if ($servingExistingContent) {
     Write-Host "Mode: generated manifest"
 }
 Write-Host ""
-Write-Host "From the ESP32 web UI or serial shell, run one of these commands:"
+Write-Host "From the Pixel Wall web UI or serial shell, run one of these commands:"
 foreach ($ip in Get-LocalIPv4Addresses) {
     Write-Host "  update-now http://$ip`:$Port"
 }

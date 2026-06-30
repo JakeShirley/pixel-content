@@ -1,25 +1,25 @@
-# ESP32 Animation Sprite Sheet
+# Pixel Wall Animation Sprite Sheet
 
-Command-line inspection tool for Expressive Pixels ESP32 `.bin` animation files. It decodes the same 10-byte header, RGB palette, `I` keyframe records, and `P` predictive records used by `CustomESP32Firmware`, then writes a PNG sprite sheet for visual inspection.
+Command-line inspection tool for Pixel Wall `.bin` animation files. It decodes the same 10-byte header, RGB palette, `I` keyframe records, and `P` predictive records used by the firmware, then writes a PNG sprite sheet for visual inspection.
 
 ## Usage
 
 From this directory:
 
 ```powershell
-python .\dump_animation_spritesheet.py ..\..\CustomESP32Firmware\data\animations\jeb-tiny-jens.bin --width 64 --height 64 --scale 4
+python .\dump_animation_spritesheet.py ..\..\PixelWallFirmware\data\animations\jeb-tiny-jens.bin --width 64 --height 64 --scale 4
 ```
 
 Or from the repo root:
 
 ```powershell
-python .\ContentTools\ESP32AnimationSpriteSheet\dump_animation_spritesheet.py .\CustomESP32Firmware\data\animations\jeb-tiny-jens.bin --width 64 --height 64 --scale 4
+python .\tools\PixelWallAnimationSpriteSheet\dump_animation_spritesheet.py .\PixelWallFirmware\data\animations\jeb-tiny-jens.bin --width 64 --height 64 --scale 4
 ```
 
 By default the tool writes `<input>-spritesheet.png` beside the source `.bin`. Use `--output` to put the PNG somewhere else:
 
 ```powershell
-python .\ContentTools\ESP32AnimationSpriteSheet\dump_animation_spritesheet.py .\CustomESP32Firmware\data\animations\jeb-tiny-jens.bin --output .\jeb-tiny-jens-spritesheet.png --width 64 --height 64
+python .\tools\PixelWallAnimationSpriteSheet\dump_animation_spritesheet.py .\PixelWallFirmware\data\animations\jeb-tiny-jens.bin --output .\jeb-tiny-jens-spritesheet.png --width 64 --height 64
 ```
 
 Useful options:

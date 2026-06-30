@@ -133,7 +133,7 @@ function Write-ContentIndexHtml {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ESP32 Animation Content</title>
+    <title>Pixel Wall Animation Content</title>
     <style>
         :root {
             color-scheme: light;
@@ -310,7 +310,7 @@ function Write-ContentIndexHtml {
 </head>
 <body>
     <header>
-        <h1>ESP32 Animation Content</h1>
+        <h1>Pixel Wall Animation Content</h1>
         <div class="summary" id="summary"></div>
     </header>
     <main id="manifests"></main>
@@ -514,7 +514,7 @@ function Write-ContentIndexHtml {
         return $indexHtmlPath
 }
 
-function Get-ESP32AnimationBinInfo {
+function Get-PixelWallAnimationBinInfo {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
@@ -664,7 +664,7 @@ function Get-ESP32AnimationBinInfo {
     }
 }
 
-function Publish-ESP32AnimationContent {
+function Publish-PixelWallAnimationContent {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$InputPath = (Join-Path (Join-Path (Get-Location) "assets") "processed"),
@@ -717,7 +717,7 @@ function Publish-ESP32AnimationContent {
             throw "Input file must be a .bin animation: $($file.FullName)"
         }
 
-        $info = Get-ESP32AnimationBinInfo -Path $file.FullName -DimensionMap $dimensionMap
+        $info = Get-PixelWallAnimationBinInfo -Path $file.FullName -DimensionMap $dimensionMap
         Assert-ContentName $info.Name
         if ($seenNames.ContainsKey($info.Name)) {
             throw "Duplicate animation name '$($info.Name)' from $($file.FullName) and $($seenNames[$info.Name])."
@@ -784,4 +784,4 @@ function Publish-ESP32AnimationContent {
     }
 }
 
-Export-ModuleMember -Function Get-ESP32AnimationBinInfo, Publish-ESP32AnimationContent
+Export-ModuleMember -Function Get-PixelWallAnimationBinInfo, Publish-PixelWallAnimationContent
