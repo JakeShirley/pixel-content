@@ -139,7 +139,7 @@ h2 {
 #sourceCanvas {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: auto;
   touch-action: none;
 }
 
