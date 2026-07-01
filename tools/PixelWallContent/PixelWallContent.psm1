@@ -468,7 +468,6 @@ function Write-ContentIndexHtml {
             const meta = document.createElement("div");
             meta.className = "meta";
             meta.append(
-                chip(`image_index ${imageIndex}`),
                 chip(animation.dimensions),
                 chip(`${animation.frames} frames`),
                 chip(`${animation.fps} fps`),
