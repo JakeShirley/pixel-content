@@ -1,5 +1,11 @@
 $MaxContentNameLength = 96
 $MaxPixelCount = 65535
+$NativeAnimationDimensions = @(
+    [pscustomobject]@{ Width = 64; Height = 64; Dimensions = "64x64" }
+    [pscustomobject]@{ Width = 32; Height = 64; Dimensions = "32x64" }
+    [pscustomobject]@{ Width = 128; Height = 64; Dimensions = "128x64" }
+    [pscustomobject]@{ Width = 128; Height = 128; Dimensions = "128x128" }
+)
 
 function Read-UInt16LittleEndian {
     param(
@@ -150,6 +156,11 @@ function Resolve-AnimationDimensions {
             Height = $side
             Dimensions = "$side`x$side"
         }
+    }
+
+    $nativeMatches = @($NativeAnimationDimensions | Where-Object { $_.Width * $_.Height -eq $TotalPixels })
+    if ($nativeMatches.Count -eq 1) {
+        return $nativeMatches[0]
     }
 
     throw "Cannot infer non-square dimensions for $Name from $TotalPixels pixels. Add dimensions with -Dimensions or a JSON dimension map."
@@ -721,8 +732,8 @@ function Get-PixelWallAnimationBinInfo {
                 }
             }
 
-            if ($decodedFrames -ne $frameCount) {
-                throw "Header says $frameCount frames, decoded $decodedFrames frames in $resolvedPath"
+            if ($decodedFrames -le 0) {
+                throw "Animation binary contains no renderable frames in $resolvedPath"
             }
             if ($totalPixels -le 0 -or $totalPixels -gt $MaxPixelCount) {
                 throw "Unsupported pixel count $totalPixels in $resolvedPath"
@@ -736,7 +747,8 @@ function Get-PixelWallAnimationBinInfo {
                 SizeBytes = $bytes.Length
                 DeclaredSizeBytes = $declaredSize
                 ExtraBytes = $bytes.Length - $declaredSize
-                FrameCount = $frameCount
+                DeclaredFrameCount = $frameCount
+                FrameCount = $decodedFrames
                 LoopCount = $loopCount
                 FramesPerSecond = $fps
                 PaletteBytes = $paletteBytes
