@@ -10,6 +10,7 @@
   const OUTPUT_SIZES = new Map([
     ["64x64", { width: 64, height: 64 }],
     ["32x64", { width: 32, height: 64 }],
+    ["128x64", { width: 128, height: 64 }],
     ["128x128", { width: 128, height: 128 }],
   ]);
   const ANIMATION_HEADER_BYTES = 10;
@@ -471,8 +472,8 @@
       }
     }
 
-    if (indexedFrames.length !== frameCount) {
-      throw new Error(`Header says ${frameCount} frames, decoded ${indexedFrames.length}.`);
+    if (indexedFrames.length <= 0) {
+      throw new Error("Animation binary contains no renderable frames.");
     }
     if (totalPixels <= 0 || totalPixels > MAX_PIXELS) {
       throw new Error(`Unsupported pixel count ${totalPixels}.`);
@@ -483,7 +484,20 @@
       throw new Error("Could not infer animation dimensions.");
     }
 
-    return { bytes, frameCount, loopCount, fps, paletteBytes, frameBytes, palette, indexedFrames, frameDelays, totalPixels, ...dimensions };
+    return {
+      bytes,
+      declaredFrameCount: frameCount,
+      frameCount: indexedFrames.length,
+      loopCount,
+      fps,
+      paletteBytes,
+      frameBytes,
+      palette,
+      indexedFrames,
+      frameDelays,
+      totalPixels,
+      ...dimensions,
+    };
   }
 
   async function loadBin(file) {
@@ -508,6 +522,7 @@
     els.maxColors.value = String(decoded.palette.length);
     els.limitFrames.checked = false;
     els.maxFrames.disabled = true;
+    els.frameSlider.max = String(Math.max(0, decoded.frameCount - 1));
     setLoadedControls(true, decoded.frameCount);
     renderPalette(decoded.palette);
     setCrop({ x: 0, y: 0, width: decoded.width, height: decoded.height });
@@ -572,7 +587,8 @@
       const bin = state.sourceBin;
       setStatus([
         `source: ${state.sourceFileName}`,
-        `decoded: ${bin.width}x${bin.height}, ${bin.frameCount} frames, ${bin.fps} fps, loops=${bin.loopCount}`,
+        `decoded: ${bin.width}x${bin.height}, ${bin.frameCount} frame${bin.frameCount === 1 ? "" : "s"}, ${bin.fps} fps, loops=${bin.loopCount}`,
+        ...(bin.declaredFrameCount !== bin.frameCount ? [`header frames: ${bin.declaredFrameCount}`] : []),
         `palette: ${bin.palette.length} colors / ${bin.paletteBytes} bytes`,
         `frame bytes: ${bin.frameBytes.toLocaleString()}`,
         `records: imported from Expressive Pixels sequence .bin`,
