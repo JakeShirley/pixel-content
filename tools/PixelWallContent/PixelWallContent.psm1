@@ -730,6 +730,9 @@ function Get-PixelWallAnimationBinInfo {
             if ($decodedFrames -le 0) {
                 throw "Animation binary contains no renderable frames in $resolvedPath"
             }
+            if ($frameCount -ne $decodedFrames) {
+                throw "Header says $frameCount frames, decoded $decodedFrames frames in $resolvedPath"
+            }
             if ($totalPixels -le 0 -or $totalPixels -gt $MaxPixelCount) {
                 throw "Unsupported pixel count $totalPixels in $resolvedPath"
             }
