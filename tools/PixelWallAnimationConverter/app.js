@@ -344,6 +344,11 @@
       return { width: requestedWidth, height: requestedHeight };
     }
 
+    const nativeMatches = Array.from(OUTPUT_SIZES.values()).filter((size) => size.width * size.height === totalPixels);
+    if (nativeMatches.length === 1) {
+      return nativeMatches[0];
+    }
+
     const square = Math.round(Math.sqrt(totalPixels));
     if (square * square === totalPixels) {
       return { width: square, height: square };
