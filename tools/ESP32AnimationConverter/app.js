@@ -947,7 +947,7 @@
     });
   }
 
-  function downloadBlob(bytes, extension, type) {
+  function downloadBlob(bytes, extension, type, prefix) {
     if (state.objectUrl) {
       URL.revokeObjectURL(state.objectUrl);
     }
@@ -956,8 +956,9 @@
     const stem = state.sourceFileName
       ? state.sourceFileName.replace(/\.[^.]+$/, "")
       : "animation";
+    const name = prefix ? `${prefix}_${stem}` : stem;
     els.downloadLink.href = state.objectUrl;
-    els.downloadLink.download = `${stem}.${extension}`;
+    els.downloadLink.download = `${name}.${extension}`;
     els.downloadLink.click();
   }
 
@@ -1070,7 +1071,12 @@
 
     if (state.sourceKind === "bin" && state.sourceBin) {
       renderPalette(state.sourceBin.palette);
-      downloadBlob(state.sourceBin.bytes, "bin", "application/octet-stream");
+      downloadBlob(
+        state.sourceBin.bytes,
+        "bin",
+        "application/octet-stream",
+        `${state.sourceBin.width}x${state.sourceBin.height}`,
+      );
       setStatus([
         `exported: ${state.sourceBin.bytes.length.toLocaleString()} bytes`,
         `source: ${state.sourceFileName}`,
@@ -1089,7 +1095,12 @@
         try {
           const result = buildAnimationBinary(rendered);
           renderPalette(result.palette);
-          downloadBlob(result.output, "bin", "application/octet-stream");
+          downloadBlob(
+            result.output,
+            "bin",
+            "application/octet-stream",
+            `${rendered.width}x${rendered.height}`,
+          );
           setStatus([
             `exported: ${result.output.length.toLocaleString()} bytes`,
             `frames: ${result.frameCount}`,
