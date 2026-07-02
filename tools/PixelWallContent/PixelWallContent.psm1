@@ -531,7 +531,6 @@ function Write-ContentIndexHtml {
             }
 
             const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-            const frameCount = view.getUint16(0, true);
             const fps = view.getUint8(3);
             const paletteBytes = view.getUint16(4, true);
             const frameBytes = view.getUint32(6, true);
@@ -577,10 +576,6 @@ function Write-ContentIndexHtml {
                 } else {
                     throw new Error(`unknown record 0x${record.toString(16)}`);
                 }
-            }
-
-            if (frames.length !== frameCount) {
-                throw new Error(`decoded ${frames.length} of ${frameCount} frames`);
             }
 
             return { fps, palette, frames, width, height };
