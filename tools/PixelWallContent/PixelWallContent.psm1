@@ -1,6 +1,7 @@
 $MaxContentNameLength = 96
 $MaxPixelCount = 65535
 $NativeAnimationDimensions = @(
+    [pscustomobject]@{ Width = 32; Height = 32; Dimensions = "32x32" }
     [pscustomobject]@{ Width = 64; Height = 64; Dimensions = "64x64" }
     [pscustomobject]@{ Width = 64; Height = 32; Dimensions = "64x32" }
     [pscustomobject]@{ Width = 128; Height = 64; Dimensions = "128x64" }
@@ -842,12 +843,34 @@ function Publish-PixelWallAnimationContent {
         $infos += $info
     }
 
-    $buckets = [ordered]@{}
+    $groupedNames = @{}
     foreach ($group in ($infos | Group-Object Dimensions | Sort-Object Name)) {
-        $names = @($group.Group | Sort-Object Name | ForEach-Object { $_.Name })
-        $buckets[$group.Name] = $names
-        $manifestPath = Join-Path $manifestDir $group.Name
-        $manifestLines = @("# $($group.Name) animations") + $names
+        $names = [System.Collections.Generic.List[string]]::new()
+        foreach ($name in @($group.Group | Sort-Object Name | ForEach-Object { $_.Name })) {
+            $names.Add([string]$name)
+        }
+        $groupedNames[$group.Name] = $names
+    }
+
+    $buckets = [ordered]@{}
+    foreach ($dimension in ($NativeAnimationDimensions | Sort-Object Dimensions)) {
+        if ($groupedNames.ContainsKey($dimension.Dimensions)) {
+            $names = $groupedNames[$dimension.Dimensions]
+        } else {
+            $names = [System.Collections.Generic.List[string]]::new()
+        }
+        $buckets[$dimension.Dimensions] = $names
+    }
+
+    foreach ($dimension in ($groupedNames.Keys | Sort-Object)) {
+        if (!$buckets.Contains($dimension)) {
+            $buckets[$dimension] = $groupedNames[$dimension]
+        }
+    }
+
+    foreach ($entry in $buckets.GetEnumerator()) {
+        $manifestPath = Join-Path $manifestDir $entry.Key
+        $manifestLines = @("# $($entry.Key) animations") + $entry.Value
         if ($PSCmdlet.ShouldProcess($manifestPath, "Write manifest")) {
             Set-Content -Path $manifestPath -Value $manifestLines -Encoding ascii
         }

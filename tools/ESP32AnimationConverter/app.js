@@ -8,6 +8,7 @@
   const DEFAULT_MAX_COLORS = 128;
   const DEFAULT_OUTPUT_SIZE = "64x64";
   const OUTPUT_SIZES = new Map([
+    ["32x32", { width: 32, height: 32 }],
     ["64x64", { width: 64, height: 64 }],
     ["64x32", { width: 64, height: 32 }],
     ["128x128", { width: 128, height: 128 }],

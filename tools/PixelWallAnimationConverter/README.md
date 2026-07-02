@@ -2,7 +2,7 @@
 
 Static browser tool for converting between GIFs and the raw Expressive Pixels animation sequence format consumed by Pixel Wall firmware.
 
-Open `index.html` in a browser, import a GIF, crop it, choose one of the fixed output sizes, choose a predictive encoding mode, and export a `.bin` file. Supported output sizes are 64 x 64, 32 x 64, 128 x 64, and 128 x 128, with 64 x 64 selected by default. You can also import an existing `.bin` file to preview it, export the original `.bin` bytes losslessly, or recreate a paletted animated GIF from the decoded frame stream. Defaults are tuned for the Pixel Wall HUB75 player: 10 fps, 21 sampled frames, 128 colors, and predictive frame records.
+Open `index.html` in a browser, import a GIF, crop it, choose one of the fixed output sizes, choose a predictive encoding mode, and export a `.bin` file. Supported output sizes are 32 x 32, 64 x 64, 64 x 32, 128 x 64, and 128 x 128, with 64 x 64 selected by default. You can also import an existing `.bin` file to preview it, export the original `.bin` bytes losslessly, or recreate a paletted animated GIF from the decoded frame stream. Defaults are tuned for the Pixel Wall HUB75 player: 10 fps, 21 sampled frames, 128 colors, and predictive frame records.
 
 Predictive encoding modes:
 
