@@ -10,7 +10,6 @@
   const OUTPUT_SIZES = new Map([
     ["64x64", { width: 64, height: 64 }],
     ["64x32", { width: 64, height: 32 }],
-    ["128x64", { width: 128, height: 64 }],
     ["128x128", { width: 128, height: 128 }],
   ]);
   const ANIMATION_HEADER_BYTES = 10;
@@ -344,11 +343,6 @@
       return { width: requestedWidth, height: requestedHeight };
     }
 
-    const nativeMatches = Array.from(OUTPUT_SIZES.values()).filter((size) => size.width * size.height === totalPixels);
-    if (nativeMatches.length === 1) {
-      return nativeMatches[0];
-    }
-
     const square = Math.round(Math.sqrt(totalPixels));
     if (square * square === totalPixels) {
       return { width: square, height: square };
@@ -477,8 +471,8 @@
       }
     }
 
-    if (indexedFrames.length <= 0) {
-      throw new Error("Animation binary contains no renderable frames.");
+    if (indexedFrames.length !== frameCount) {
+      throw new Error(`Header says ${frameCount} frames, decoded ${indexedFrames.length}.`);
     }
     if (totalPixels <= 0 || totalPixels > MAX_PIXELS) {
       throw new Error(`Unsupported pixel count ${totalPixels}.`);
@@ -489,20 +483,7 @@
       throw new Error("Could not infer animation dimensions.");
     }
 
-    return {
-      bytes,
-      declaredFrameCount: frameCount,
-      frameCount: indexedFrames.length,
-      loopCount,
-      fps,
-      paletteBytes,
-      frameBytes,
-      palette,
-      indexedFrames,
-      frameDelays,
-      totalPixels,
-      ...dimensions,
-    };
+    return { bytes, frameCount, loopCount, fps, paletteBytes, frameBytes, palette, indexedFrames, frameDelays, totalPixels, ...dimensions };
   }
 
   async function loadBin(file) {
@@ -527,7 +508,6 @@
     els.maxColors.value = String(decoded.palette.length);
     els.limitFrames.checked = false;
     els.maxFrames.disabled = true;
-    els.frameSlider.max = String(Math.max(0, decoded.frameCount - 1));
     setLoadedControls(true, decoded.frameCount);
     renderPalette(decoded.palette);
     setCrop({ x: 0, y: 0, width: decoded.width, height: decoded.height });
@@ -592,8 +572,7 @@
       const bin = state.sourceBin;
       setStatus([
         `source: ${state.sourceFileName}`,
-        `decoded: ${bin.width}x${bin.height}, ${bin.frameCount} frame${bin.frameCount === 1 ? "" : "s"}, ${bin.fps} fps, loops=${bin.loopCount}`,
-        ...(bin.declaredFrameCount !== bin.frameCount ? [`header frames: ${bin.declaredFrameCount}`] : []),
+        `decoded: ${bin.width}x${bin.height}, ${bin.frameCount} frames, ${bin.fps} fps, loops=${bin.loopCount}`,
         `palette: ${bin.palette.length} colors / ${bin.paletteBytes} bytes`,
         `frame bytes: ${bin.frameBytes.toLocaleString()}`,
         `records: imported from Expressive Pixels sequence .bin`,

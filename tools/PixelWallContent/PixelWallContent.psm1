@@ -2,7 +2,7 @@ $MaxContentNameLength = 96
 $MaxPixelCount = 65535
 $NativeAnimationDimensions = @(
     [pscustomobject]@{ Width = 64; Height = 64; Dimensions = "64x64" }
-    [pscustomobject]@{ Width = 32; Height = 64; Dimensions = "32x64" }
+    [pscustomobject]@{ Width = 64; Height = 32; Dimensions = "64x32" }
     [pscustomobject]@{ Width = 128; Height = 64; Dimensions = "128x64" }
     [pscustomobject]@{ Width = 128; Height = 128; Dimensions = "128x128" }
 )
