@@ -339,7 +339,7 @@ function Write-ContentIndexHtml {
 
         canvas {
             width: 100%;
-            aspect-ratio: 1;
+            height: auto;
             align-self: start;
             border: 1px solid #c9d2cc;
             border-radius: 4px;
