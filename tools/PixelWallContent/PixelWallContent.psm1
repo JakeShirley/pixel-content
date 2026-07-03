@@ -2,8 +2,10 @@ $MaxContentNameLength = 96
 $MaxPixelCount = 65535
 $NativeAnimationDimensions = @(
     [pscustomobject]@{ Width = 32; Height = 32; Dimensions = "32x32" }
+    [pscustomobject]@{ Width = 32; Height = 64; Dimensions = "32x64" }
     [pscustomobject]@{ Width = 64; Height = 64; Dimensions = "64x64" }
     [pscustomobject]@{ Width = 64; Height = 32; Dimensions = "64x32" }
+    [pscustomobject]@{ Width = 64; Height = 128; Dimensions = "64x128" }
     [pscustomobject]@{ Width = 128; Height = 64; Dimensions = "128x64" }
     [pscustomobject]@{ Width = 128; Height = 128; Dimensions = "128x128" }
 )
@@ -121,11 +123,28 @@ function ConvertTo-DimensionParts {
     }
 }
 
+function Get-DimensionFolderName {
+    param([string]$Path)
+
+    $parentPath = Split-Path -Path $Path -Parent
+    if ([string]::IsNullOrWhiteSpace($parentPath)) {
+        return $null
+    }
+
+    $folderName = Split-Path -Path $parentPath -Leaf
+    if ($folderName -match '^\d+x\d+$') {
+        return $folderName
+    }
+
+    return $null
+}
+
 function Resolve-AnimationDimensions {
     param(
         [int]$TotalPixels,
         [string]$Name,
         [string]$LeafName,
+        [string]$FolderDimensions,
         [string]$Dimensions,
         [hashtable]$DimensionMap
     )
@@ -133,6 +152,8 @@ function Resolve-AnimationDimensions {
     $candidate = $null
     if (![string]::IsNullOrWhiteSpace($Dimensions)) {
         $candidate = $Dimensions
+    } elseif (![string]::IsNullOrWhiteSpace($FolderDimensions)) {
+        $candidate = $FolderDimensions
     } elseif ($DimensionMap) {
         if ($DimensionMap.ContainsKey($Name)) {
             $candidate = [string]$DimensionMap[$Name]
@@ -626,6 +647,7 @@ function Get-PixelWallAnimationBinInfo {
             $resolvedPath = (Resolve-Path $item).ProviderPath
             $name = [System.IO.Path]::GetFileNameWithoutExtension($resolvedPath)
             $leafName = [System.IO.Path]::GetFileName($resolvedPath)
+            $folderDimensions = Get-DimensionFolderName $resolvedPath
             $bytes = [System.IO.File]::ReadAllBytes($resolvedPath)
 
             if ($bytes.Length -lt 10) {
@@ -738,7 +760,7 @@ function Get-PixelWallAnimationBinInfo {
                 throw "Unsupported pixel count $totalPixels in $resolvedPath"
             }
 
-            $dimensionParts = Resolve-AnimationDimensions -TotalPixels $totalPixels -Name $name -LeafName $leafName -Dimensions $Dimensions -DimensionMap $DimensionMap
+            $dimensionParts = Resolve-AnimationDimensions -TotalPixels $totalPixels -Name $name -LeafName $leafName -FolderDimensions $folderDimensions -Dimensions $Dimensions -DimensionMap $DimensionMap
 
             [pscustomobject]@{
                 Path = $resolvedPath
