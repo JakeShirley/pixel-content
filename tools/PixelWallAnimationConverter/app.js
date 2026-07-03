@@ -9,8 +9,10 @@
   const DEFAULT_OUTPUT_SIZE = "64x64";
   const OUTPUT_SIZES = new Map([
     ["32x32", { width: 32, height: 32 }],
+    ["32x64", { width: 32, height: 64 }],
     ["64x64", { width: 64, height: 64 }],
     ["64x32", { width: 64, height: 32 }],
+    ["64x128", { width: 64, height: 128 }],
     ["128x64", { width: 128, height: 64 }],
     ["128x128", { width: 128, height: 128 }],
   ]);
@@ -44,6 +46,9 @@
     cropW: document.getElementById("cropW"),
     cropH: document.getElementById("cropH"),
     pixelGridOverlay: document.getElementById("pixelGridOverlay"),
+    binGeometry: document.getElementById("binGeometry"),
+    autoGeometry: document.getElementById("autoGeometry"),
+    swapGeometry: document.getElementById("swapGeometry"),
     fitCrop: document.getElementById("fitCrop"),
     squareCrop: document.getElementById("squareCrop"),
     centerCrop: document.getElementById("centerCrop"),
@@ -90,7 +95,85 @@
 
   function setOutputSize(width, height) {
     const match = Array.from(OUTPUT_SIZES.entries()).find(([, size]) => size.width === width && size.height === height);
-    els.outputSize.value = match ? match[0] : DEFAULT_OUTPUT_SIZE;
+    if (match) {
+      els.outputSize.value = match[0];
+      return true;
+    }
+    return false;
+  }
+
+  function dimensionKey(width, height) {
+    return `${width}x${height}`;
+  }
+
+  function addDimensionOption(options, width, height) {
+    if (width < 1 || height < 1 || width * height > MAX_PIXELS) {
+      return;
+    }
+    const key = dimensionKey(width, height);
+    if (!options.some((option) => option.key === key)) {
+      options.push({ key, width, height });
+    }
+  }
+
+  function nativeDimensionOptions(totalPixels) {
+    const options = [];
+    OUTPUT_SIZES.forEach((size) => {
+      if (size.width * size.height === totalPixels) {
+        addDimensionOption(options, size.width, size.height);
+        addDimensionOption(options, size.height, size.width);
+      }
+    });
+    return options;
+  }
+
+  function dimensionOptions(totalPixels) {
+    const options = nativeDimensionOptions(totalPixels);
+    const square = Math.round(Math.sqrt(totalPixels));
+    if (square * square === totalPixels) {
+      addDimensionOption(options, square, square);
+    }
+
+    for (let height = Math.floor(Math.sqrt(totalPixels)); height >= 1; height -= 1) {
+      if (totalPixels % height !== 0) {
+        continue;
+      }
+      const width = totalPixels / height;
+      if (width / height <= 8) {
+        addDimensionOption(options, width, height);
+        addDimensionOption(options, height, width);
+      }
+    }
+    if (!options.length) {
+      const fallback = inferFallbackDimensions(totalPixels);
+      addDimensionOption(options, fallback.width, fallback.height);
+    }
+    return options;
+  }
+
+  function dimensionScore(indexedFrames, palette, width, height) {
+    let total = 0;
+    let comparisons = 0;
+    const sampleCount = Math.min(indexedFrames.length, 5);
+    for (let frameIndex = 0; frameIndex < sampleCount; frameIndex += 1) {
+      const frame = indexedFrames[Math.round((frameIndex * (indexedFrames.length - 1)) / Math.max(1, sampleCount - 1))];
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const color = palette[frame[y * width + x]] || palette[0] || { r: 0, g: 0, b: 0 };
+          if (x + 1 < width) {
+            const right = palette[frame[y * width + x + 1]] || palette[0] || color;
+            total += Math.abs(color.r - right.r) + Math.abs(color.g - right.g) + Math.abs(color.b - right.b);
+            comparisons += 1;
+          }
+          if (y + 1 < height) {
+            const below = palette[frame[(y + 1) * width + x]] || palette[0] || color;
+            total += Math.abs(color.r - below.r) + Math.abs(color.g - below.g) + Math.abs(color.b - below.b);
+            comparisons += 1;
+          }
+        }
+      }
+    }
+    return comparisons ? total / comparisons : Number.POSITIVE_INFINITY;
   }
 
   function setLoadedControls(enabled, frameCount) {
@@ -339,7 +422,7 @@
     return (bytes[offset] << 8) | bytes[offset + 1];
   }
 
-  function inferDimensions(totalPixels) {
+  function inferFallbackDimensions(totalPixels) {
     const { width: requestedWidth, height: requestedHeight } = selectedOutputSize();
     if (requestedWidth * requestedHeight === totalPixels) {
       return { width: requestedWidth, height: requestedHeight };
@@ -362,6 +445,18 @@
     }
 
     return { width: totalPixels, height: 1 };
+  }
+
+  function inferDimensions(totalPixels, indexedFrames, palette) {
+    const nativeOptions = nativeDimensionOptions(totalPixels);
+    if (nativeOptions.length > 1 && indexedFrames.length && palette.length) {
+      const scored = nativeOptions
+        .map((option) => ({ ...option, score: dimensionScore(indexedFrames, palette, option.width, option.height) }))
+        .sort((left, right) => left.score - right.score);
+      return { ...scored[0], mode: "auto-detected" };
+    }
+
+    return { ...inferFallbackDimensions(totalPixels), mode: "inferred" };
   }
 
   function indexedFrameToImageData(indexed, palette, width, height) {
@@ -485,7 +580,7 @@
       throw new Error(`Unsupported pixel count ${totalPixels}.`);
     }
 
-    const dimensions = inferDimensions(totalPixels);
+    const dimensions = inferDimensions(totalPixels, indexedFrames, palette);
     if (dimensions.width * dimensions.height !== totalPixels) {
       throw new Error("Could not infer animation dimensions.");
     }
@@ -502,8 +597,55 @@
       indexedFrames,
       frameDelays,
       totalPixels,
+      dimensionOptions: dimensionOptions(totalPixels),
+      dimensionMode: dimensions.mode,
       ...dimensions,
     };
+  }
+
+  function setBinGeometryControls(enabled) {
+    els.binGeometry.disabled = !enabled;
+    els.autoGeometry.disabled = !enabled;
+    els.swapGeometry.disabled = !enabled;
+    if (!enabled) {
+      els.binGeometry.innerHTML = '<option value="">No BIN loaded</option>';
+    }
+  }
+
+  function populateBinGeometryOptions(decoded) {
+    els.binGeometry.innerHTML = "";
+    decoded.dimensionOptions.forEach((option) => {
+      const item = document.createElement("option");
+      item.value = option.key;
+      item.textContent = `${option.width} x ${option.height}`;
+      els.binGeometry.appendChild(item);
+    });
+    els.binGeometry.value = dimensionKey(decoded.width, decoded.height);
+    setBinGeometryControls(decoded.dimensionOptions.length > 0);
+  }
+
+  function applyBinGeometry(width, height, mode) {
+    const bin = state.sourceBin;
+    if (!bin || width * height !== bin.totalPixels) {
+      return;
+    }
+
+    bin.width = width;
+    bin.height = height;
+    bin.dimensionMode = mode;
+    state.frames = bin.indexedFrames.map((frame, index) => ({
+      imageData: indexedFrameToImageData(frame, bin.palette, width, height),
+      delay: bin.frameDelays[index],
+    }));
+    state.sourceWidth = width;
+    state.sourceHeight = height;
+    resizeCanvasToSource(width, height);
+    setOutputSize(width, height);
+    els.binGeometry.value = dimensionKey(width, height);
+    renderPalette(bin.palette);
+    setCrop({ x: 0, y: 0, width, height });
+    setFrame(Math.min(state.currentFrame, state.frames.length - 1));
+    updateStatusPreview();
   }
 
   async function loadBin(file) {
@@ -514,15 +656,7 @@
     state.sourceKind = "bin";
     state.sourceFileName = file.name;
     state.sourceBin = decoded;
-    state.frames = decoded.indexedFrames.map((frame, index) => ({
-      imageData: indexedFrameToImageData(frame, decoded.palette, decoded.width, decoded.height),
-      delay: decoded.frameDelays[index],
-    }));
-    state.sourceWidth = decoded.width;
-    state.sourceHeight = decoded.height;
-    resizeCanvasToSource(decoded.width, decoded.height);
 
-    setOutputSize(decoded.width, decoded.height);
     els.fps.value = String(decoded.fps);
     els.loopCount.value = String(decoded.loopCount);
     els.maxColors.value = String(decoded.palette.length);
@@ -530,10 +664,8 @@
     els.maxFrames.disabled = true;
     els.frameSlider.max = String(Math.max(0, decoded.frameCount - 1));
     setLoadedControls(true, decoded.frameCount);
-    renderPalette(decoded.palette);
-    setCrop({ x: 0, y: 0, width: decoded.width, height: decoded.height });
-    setFrame(0);
-    updateStatusPreview();
+    populateBinGeometryOptions(decoded);
+    applyBinGeometry(decoded.width, decoded.height, decoded.dimensionMode);
   }
 
   function medianDelay(frames) {
@@ -556,6 +688,7 @@
     state.sourceKind = "gif";
     state.sourceFileName = file.name;
     state.sourceBin = null;
+    setBinGeometryControls(false);
     state.frames = decoded.frames;
     state.sourceWidth = decoded.width;
     state.sourceHeight = decoded.height;
@@ -594,6 +727,7 @@
       setStatus([
         `source: ${state.sourceFileName}`,
         `decoded: ${bin.width}x${bin.height}, ${bin.frameCount} frame${bin.frameCount === 1 ? "" : "s"}, ${bin.fps} fps, loops=${bin.loopCount}`,
+        `geometry: ${bin.dimensionMode}`,
         ...(bin.declaredFrameCount !== bin.frameCount ? [`header frames: ${bin.declaredFrameCount}`] : []),
         `palette: ${bin.palette.length} colors / ${bin.paletteBytes} bytes`,
         `frame bytes: ${bin.frameBytes.toLocaleString()}`,
@@ -1234,8 +1368,34 @@
     loader(file).catch((error) => {
       els.exportBin.disabled = true;
       els.exportGif.disabled = true;
+      setBinGeometryControls(false);
       setStatus(`${lowerName.endsWith(".bin") ? "BIN" : "GIF"} import failed: ${error.message}`);
     });
+  }
+
+  function syncBinGeometry() {
+    if (!state.sourceBin) {
+      return;
+    }
+    const [width, height] = els.binGeometry.value.split("x").map((part) => Number.parseInt(part, 10));
+    if (Number.isFinite(width) && Number.isFinite(height)) {
+      applyBinGeometry(width, height, "manual");
+    }
+  }
+
+  function autoDetectBinGeometry() {
+    if (!state.sourceBin) {
+      return;
+    }
+    const detected = inferDimensions(state.sourceBin.totalPixels, state.sourceBin.indexedFrames, state.sourceBin.palette);
+    applyBinGeometry(detected.width, detected.height, detected.mode);
+  }
+
+  function swapBinGeometry() {
+    if (!state.sourceBin) {
+      return;
+    }
+    applyBinGeometry(state.sourceBin.height, state.sourceBin.width, "manual");
   }
 
   function applyPanelDefaults() {
@@ -1263,6 +1423,9 @@
       input.addEventListener("input", updateStatusPreview);
     });
     els.outputSize.addEventListener("change", syncOutputSize);
+    els.binGeometry.addEventListener("change", syncBinGeometry);
+    els.autoGeometry.addEventListener("click", autoDetectBinGeometry);
+    els.swapGeometry.addEventListener("click", swapBinGeometry);
     els.predictiveMode.addEventListener("change", updateStatusPreview);
     els.limitFrames.addEventListener("change", () => {
       els.maxFrames.disabled = !els.limitFrames.checked;

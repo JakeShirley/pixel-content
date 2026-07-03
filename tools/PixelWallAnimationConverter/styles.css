@@ -269,6 +269,10 @@ input[type="color"] {
   margin-top: 10px;
 }
 
+.buttonRow.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .buttonRow button {
   min-height: 36px;
 }

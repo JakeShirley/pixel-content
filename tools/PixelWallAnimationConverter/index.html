@@ -36,6 +36,19 @@
 
       <aside class="controlsPanel">
         <div class="controlBlock">
+          <h2>Source</h2>
+          <label class="full">BIN geometry
+            <select id="binGeometry" disabled>
+              <option value="">No BIN loaded</option>
+            </select>
+          </label>
+          <div class="buttonRow two">
+            <button id="autoGeometry" type="button" disabled>Auto detect</button>
+            <button id="swapGeometry" type="button" disabled>Swap W/H</button>
+          </div>
+        </div>
+
+        <div class="controlBlock">
           <h2>Crop</h2>
           <div class="grid four">
             <label>X<input id="cropX" type="number" min="0" value="0"></label>
@@ -56,8 +69,10 @@
             <label class="full">Size
               <select id="outputSize">
                 <option value="32x32">32 x 32</option>
+                <option value="32x64">32 x 64</option>
                 <option value="64x64" selected>64 x 64</option>
                 <option value="64x32">64 x 32</option>
+                <option value="64x128">64 x 128</option>
                 <option value="128x64">128 x 64</option>
                 <option value="128x128">128 x 128</option>
               </select>
