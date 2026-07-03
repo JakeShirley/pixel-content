@@ -41,7 +41,7 @@ jobs:
         run: |
           Import-Module ./tools/PixelWallContent/PixelWallContent.psm1
           Publish-PixelWallAnimationContent -InputPath ./assets/processed -OutputPath ./_site -Clean -Recurse -PassThru |
-            Format-Table Dimensions, Name, FrameCount, FramesPerSecond, SizeBytes
+            Format-Table Dimensions, Name, PublishedName, FrameCount, FramesPerSecond, SizeBytes
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

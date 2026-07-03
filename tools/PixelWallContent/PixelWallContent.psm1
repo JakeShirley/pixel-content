@@ -847,17 +847,20 @@ function Publish-PixelWallAnimationContent {
 
         $info = Get-PixelWallAnimationBinInfo -Path $file.FullName -DimensionMap $dimensionMap
         Assert-ContentName $info.Name
+        $publishedName = "$($info.Dimensions)_$($info.Name)"
+        Assert-ContentName $publishedName
+        $info | Add-Member -NotePropertyName PublishedName -NotePropertyValue $publishedName
         $sourcePath = ConvertTo-RepositoryRelativePath -Path $file.FullName -RootPath $repositoryRoot
         $info | Add-Member -NotePropertyName SourcePath -NotePropertyValue $sourcePath
         if (![string]::IsNullOrWhiteSpace($githubSourceTreeBaseUrl)) {
             $info | Add-Member -NotePropertyName GitHubUrl -NotePropertyValue "$githubSourceTreeBaseUrl/$(ConvertTo-UrlPath $sourcePath)"
         }
-        if ($seenNames.ContainsKey($info.Name)) {
-            throw "Duplicate animation name '$($info.Name)' from $($file.FullName) and $($seenNames[$info.Name])."
+        if ($seenNames.ContainsKey($info.PublishedName)) {
+            throw "Duplicate published animation name '$($info.PublishedName)' from $($file.FullName) and $($seenNames[$info.PublishedName])."
         }
-        $seenNames[$info.Name] = $file.FullName
+        $seenNames[$info.PublishedName] = $file.FullName
 
-        $destination = Join-Path $animationsDir "$($info.Name).bin"
+        $destination = Join-Path $animationsDir "$($info.PublishedName).bin"
         if ($PSCmdlet.ShouldProcess($destination, "Copy animation")) {
             Copy-Item -Path $file.FullName -Destination $destination -Force
         }
@@ -868,7 +871,7 @@ function Publish-PixelWallAnimationContent {
     $groupedNames = @{}
     foreach ($group in ($infos | Group-Object Dimensions | Sort-Object Name)) {
         $names = [System.Collections.Generic.List[string]]::new()
-        foreach ($name in @($group.Group | Sort-Object Name | ForEach-Object { $_.Name })) {
+        foreach ($name in @($group.Group | Sort-Object PublishedName | ForEach-Object { $_.PublishedName })) {
             $names.Add([string]$name)
         }
         $groupedNames[$group.Name] = $names
@@ -903,7 +906,8 @@ function Publish-PixelWallAnimationContent {
         buckets = $buckets
         animations = @($infos | Sort-Object Dimensions, Name | ForEach-Object {
             $animation = [ordered]@{
-                name = $_.Name
+                name = $_.PublishedName
+                sourceName = $_.Name
                 dimensions = $_.Dimensions
                 width = $_.Width
                 height = $_.Height
@@ -911,7 +915,7 @@ function Publish-PixelWallAnimationContent {
                 fps = $_.FramesPerSecond
                 paletteColors = $_.PaletteColorCount
                 bytes = $_.SizeBytes
-                path = "animations/$($_.Name).bin"
+                path = "animations/$($_.PublishedName).bin"
                 sourcePath = $_.SourcePath
             }
             if (![string]::IsNullOrWhiteSpace($_.GitHubUrl)) {

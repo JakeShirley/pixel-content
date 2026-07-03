@@ -29,12 +29,12 @@ The publisher writes:
 ```text
 _site/
   index.html
-  animations/<name>.bin
+  animations/<dimensions>_<name>.bin
   manifest/<dimensions>
   content-index.json
 ```
 
-Processed files may be flat or grouped into dimensions folders. A parent folder named `<width>x<height>` becomes the source of truth for that animation's dimensions, so `assets/processed/32x64/foo.bin` publishes as animation name `foo` in manifest `32x64`.
+Processed files may be flat or grouped into dimensions folders. A parent folder named `<width>x<height>` becomes the source of truth for that animation's dimensions, so `assets/processed/32x64/foo.bin` publishes as animation file `animations/32x64_foo.bin` and manifest entry `32x64_foo` in manifest `32x64`.
 
-Manifest files follow `CONTENT_SERVER_FORMAT.md`: each `manifest/<dimensions>` file contains the animation names for that display size, and the firmware downloads raw bytes from `animations/<name>.bin`. The generated `index.html` lists the manifests in bucket order, keeps each manifest list in order, shows zero-based `image_index` values, and renders browser previews from the deployed `.bin` bytes.
+Manifest files follow `CONTENT_SERVER_FORMAT.md`: each `manifest/<dimensions>` file contains the published animation names for that display size, and the firmware downloads raw bytes from `animations/<published-name>.bin`. The generated `index.html` lists the manifests in bucket order, keeps each manifest list in order, shows zero-based `image_index` values, and renders browser previews from the deployed `.bin` bytes.
 
