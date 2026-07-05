@@ -31,6 +31,7 @@
     sourceKind: "none",
     sourceFileName: "animation",
     sourceBin: null,
+    palettePreviewTimer: 0,
   };
 
   const els = {
@@ -341,6 +342,7 @@
     if (els.canvas.hasPointerCapture(event.pointerId)) {
       els.canvas.releasePointerCapture(event.pointerId);
     }
+    updateStatusPreview();
   }
 
   function stopPlayback() {
@@ -688,6 +690,7 @@
     state.sourceKind = "gif";
     state.sourceFileName = file.name;
     state.sourceBin = null;
+    els.paletteSwatches.innerHTML = "";
     setBinGeometryControls(false);
     state.frames = decoded.frames;
     state.sourceWidth = decoded.width;
@@ -750,6 +753,29 @@
       `encoding: ${predictiveModeLabel(els.predictiveMode.value)}`,
       `format: Expressive Pixels sequence .bin`,
     ].join("\n"));
+    schedulePalettePreview();
+  }
+
+  function schedulePalettePreview() {
+    if (state.sourceKind !== "gif" || !state.frames.length) {
+      return;
+    }
+    if (state.palettePreviewTimer) {
+      window.clearTimeout(state.palettePreviewTimer);
+    }
+    state.palettePreviewTimer = window.setTimeout(() => {
+      state.palettePreviewTimer = 0;
+      if (state.sourceKind !== "gif" || !state.frames.length) {
+        return;
+      }
+      try {
+        const rendered = renderExportFrames();
+        const maxColors = clamp(toInt(els.maxColors, DEFAULT_MAX_COLORS), 2, 256);
+        renderPalette(buildPalette(rendered.frames, maxColors));
+      } catch {
+        // preview is best-effort; failures surface at export time
+      }
+    }, 120);
   }
 
   function selectedFrameIndices() {
