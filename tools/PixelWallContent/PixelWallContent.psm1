@@ -798,6 +798,9 @@ function Publish-PixelWallAnimationContent {
 
         [string]$SourceRef,
 
+        [ValidateRange(0, 31)]
+        [int]$RotationDay = [DateTime]::UtcNow.Day,
+
         [switch]$Recurse,
 
         [switch]$Clean,
@@ -871,8 +874,11 @@ function Publish-PixelWallAnimationContent {
     $groupedNames = @{}
     foreach ($group in ($infos | Group-Object Dimensions | Sort-Object Name)) {
         $names = [System.Collections.Generic.List[string]]::new()
-        foreach ($name in @($group.Group | Sort-Object PublishedName | ForEach-Object { $_.PublishedName })) {
-            $names.Add([string]$name)
+        # Rotate a stable alphabetical baseline by UTC day so each image_index selects different content over time.
+        $sortedNames = @($group.Group | Sort-Object PublishedName | ForEach-Object { $_.PublishedName })
+        for ($index = 0; $index -lt $sortedNames.Count; $index += 1) {
+            $rotatedIndex = ($index + ($RotationDay % $sortedNames.Count)) % $sortedNames.Count
+            $names.Add([string]$sortedNames[$rotatedIndex])
         }
         $groupedNames[$group.Name] = $names
     }
