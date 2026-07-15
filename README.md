@@ -12,3 +12,7 @@ Tools for preparing, inspecting, and serving Pixel Wall dynamic animation conten
 ## Dynamic Content Server Format
 
 See `CONTENT_SERVER_FORMAT.md` for the HTTP routes, manifest syntax, asset naming rules, and firmware selection behavior expected by the Pixel Wall updater.
+
+## Art Source
+
+Some (but not all) can be found here on the Minecraft community wiki: https://minecraft.wiki/w/Category:Pixel_art
