@@ -474,6 +474,30 @@
     }
   }
 
+  async function decodePng(file) {
+    const imageUrl = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      await new Promise((resolve, reject) => {
+        image.addEventListener("load", resolve, { once: true });
+        image.addEventListener("error", () => reject(new Error("The browser could not decode this PNG image.")), { once: true });
+        image.src = imageUrl;
+      });
+      const workCanvas = document.createElement("canvas");
+      workCanvas.width = image.naturalWidth;
+      workCanvas.height = image.naturalHeight;
+      const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
+      workCtx.drawImage(image, 0, 0);
+      return {
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        frames: [{ imageData: workCtx.getImageData(0, 0, image.naturalWidth, image.naturalHeight), delay: 100 }],
+      };
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }
+
   function readU16BE(bytes, offset) {
     return (bytes[offset] << 8) | bytes[offset + 1];
   }
@@ -786,6 +810,31 @@
     updateStatusPreview();
   }
 
+  async function loadPng(file) {
+    stopPlayback();
+    setBusy("Decoding PNG...");
+
+    const decoded = await decodePng(file);
+    state.sourceKind = "gif";
+    state.sourceFileName = file.name;
+    state.sourceBin = null;
+    els.paletteSwatches.innerHTML = "";
+    setBinGeometryControls(false);
+    state.frames = decoded.frames;
+    state.sourceWidth = decoded.width;
+    state.sourceHeight = decoded.height;
+    resizeCanvasToSource(decoded.width, decoded.height);
+
+    els.frameSlider.max = String(Math.max(0, decoded.frames.length - 1));
+    setLoadedControls(decoded.frames.length > 0, decoded.frames.length);
+
+    els.fps.value = String(Math.min(sourceFps(decoded.frames), DEFAULT_FPS));
+    const outputSize = selectedOutputSize();
+    setCrop(fitCropToAspect(decoded.width, decoded.height, outputSize.width, outputSize.height));
+    setFrame(0);
+    updateStatusPreview();
+  }
+
   function fitCropToAspect(width, height, targetWidth, targetHeight) {
     const targetRatio = targetWidth / targetHeight;
     const sourceRatio = width / height;
@@ -800,7 +849,7 @@
 
   function updateStatusPreview() {
     if (!state.frames.length) {
-      setStatus("No GIF, WebP, or BIN loaded.");
+      setStatus("No GIF, PNG, WebP, or BIN loaded.");
       return;
     }
 
@@ -1466,12 +1515,12 @@
     }
 
     const lowerName = file.name.toLowerCase();
-    const loader = lowerName.endsWith(".bin") ? loadBin : lowerName.endsWith(".webp") ? loadWebp : loadGif;
+    const loader = lowerName.endsWith(".bin") ? loadBin : lowerName.endsWith(".webp") ? loadWebp : lowerName.endsWith(".png") ? loadPng : loadGif;
     loader(file).catch((error) => {
       els.exportBin.disabled = true;
       els.exportGif.disabled = true;
       setBinGeometryControls(false);
-      const sourceType = lowerName.endsWith(".bin") ? "BIN" : lowerName.endsWith(".webp") ? "WebP" : "GIF";
+      const sourceType = lowerName.endsWith(".bin") ? "BIN" : lowerName.endsWith(".webp") ? "WebP" : lowerName.endsWith(".png") ? "PNG" : "GIF";
       setStatus(`${sourceType} import failed: ${error.message}`);
     });
   }
@@ -1555,7 +1604,7 @@
     window.addEventListener("drop", (event) => {
       event.preventDefault();
       els.body.classList.remove("dropReady");
-      const file = Array.from(event.dataTransfer.files).find((entry) => entry.type === "image/gif" || entry.type === "image/webp" || /\.(gif|webp|bin)$/i.test(entry.name));
+      const file = Array.from(event.dataTransfer.files).find((entry) => entry.type === "image/gif" || entry.type === "image/png" || entry.type === "image/webp" || /\.(gif|png|webp|bin)$/i.test(entry.name));
       handleFile(file);
     });
   }
