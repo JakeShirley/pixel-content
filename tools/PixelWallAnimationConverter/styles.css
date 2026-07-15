@@ -141,6 +141,8 @@ h2 {
   display: block;
   width: 100%;
   height: auto;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
   touch-action: none;
 }
 

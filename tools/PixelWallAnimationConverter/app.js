@@ -70,6 +70,7 @@
   };
 
   const ctx = els.canvas.getContext("2d", { willReadFrequently: true });
+  ctx.imageSmoothingEnabled = false;
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -217,6 +218,7 @@
   function resizeCanvasToSource(width, height) {
     els.canvas.width = width;
     els.canvas.height = height;
+    ctx.imageSmoothingEnabled = false;
   }
 
   function gridLineStep(crop, outputWidth, outputHeight) {
