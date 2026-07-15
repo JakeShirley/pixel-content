@@ -16,15 +16,15 @@
             <h1>Animation Converter</h1>
           </div>
           <label class="filePicker">
-            <input id="gifInput" type="file" accept="image/gif,.gif,.bin,application/octet-stream">
-            <span>Import GIF/BIN</span>
+            <input id="gifInput" type="file" accept="image/gif,image/webp,.gif,.webp,.bin,application/octet-stream">
+            <span>Import GIF/WebP/BIN</span>
           </label>
         </div>
 
         <div class="canvasShell">
-          <canvas id="sourceCanvas" width="640" height="360" aria-label="GIF crop preview"></canvas>
+          <canvas id="sourceCanvas" width="640" height="360" aria-label="Animation crop preview"></canvas>
           <div id="pixelGridOverlay" class="pixelGridOverlay" aria-hidden="true" hidden></div>
-          <div id="emptyState" class="emptyState">Drop a GIF or BIN here</div>
+          <div id="emptyState" class="emptyState">Drop a GIF, WebP, or BIN here</div>
         </div>
 
         <div class="timeline">
@@ -107,7 +107,7 @@
             <button id="exportGif" type="button" class="exportButton secondary" disabled>Export GIF</button>
           </div>
           <a id="downloadLink" hidden></a>
-          <pre id="status" class="status">No GIF or BIN loaded.</pre>
+          <pre id="status" class="status">No GIF, WebP, or BIN loaded.</pre>
         </div>
       </aside>
     </section>
