@@ -287,6 +287,27 @@ function Write-ContentIndexHtml {
             font-size: 0.9rem;
         }
 
+        .tools-links {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 1px solid var(--line);
+        }
+
+        .tools-links a {
+            color: var(--accent-strong);
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(18, 111, 98, 0.08);
+            border-radius: 4px;
+        }
+
+        .tools-links a:hover {
+            background: rgba(18, 111, 98, 0.15);
+            text-decoration: underline;
+        }
+
         main {
             display: grid;
             gap: 28px;
@@ -415,6 +436,9 @@ function Write-ContentIndexHtml {
     <header>
         <h1>Pixel Wall Animation Content</h1>
         <div class="summary" id="summary"></div>
+        <div class="tools-links">
+            <a href="converter/">Animation Converter Tool</a>
+        </div>
     </header>
     <main id="manifests"></main>
     <footer>

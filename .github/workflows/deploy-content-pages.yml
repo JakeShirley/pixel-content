@@ -7,6 +7,7 @@ on:
     paths:
       - assets/processed/**
       - tools/PixelWallContent/**
+      - tools/PixelWallAnimationConverter/**
       - CONTENT_SERVER_FORMAT.md
       - .github/workflows/deploy-content-pages.yml
   schedule:
@@ -44,6 +45,16 @@ jobs:
           Import-Module ./tools/PixelWallContent/PixelWallContent.psm1
           Publish-PixelWallAnimationContent -InputPath ./assets/processed -OutputPath ./_site -Clean -Recurse -PassThru |
             Format-Table Dimensions, Name, PublishedName, FrameCount, FramesPerSecond, SizeBytes
+
+      - name: Deploy converter tool
+        shell: pwsh
+        run: |
+          $converterSrc = './tools/PixelWallAnimationConverter'
+          $converterDest = './_site/converter'
+          if (Test-Path $converterDest) {
+            Remove-Item -Recurse -Force $converterDest
+          }
+          Copy-Item -Path $converterSrc -Destination $converterDest -Recurse
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
