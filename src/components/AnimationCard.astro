@@ -1,0 +1,133 @@
+---
+interface Props {
+  animation: {
+    name: string;
+    publishedName: string;
+    dimensions: string;
+    width: number;
+    height: number;
+    frames: number;
+    fps: number;
+    paletteColors: number;
+    bytes: number;
+    path: string;
+  };
+  imageIndex: number;
+}
+
+const { animation, imageIndex } = Astro.props;
+---
+
+<li>
+  <article class="animation-card">
+    <canvas
+      width={animation.width}
+      height={animation.height}
+      aria-label={`${animation.name} preview`}
+      data-animation-preview={animation.path}
+    ></canvas>
+    <div class="details">
+      <h3>
+        <a href={animation.path}>{animation.name}</a>
+      </h3>
+      <div class="links">
+        <a href={`converter/?file=../${animation.path}`}>Open in Converter</a>
+      </div>
+      <div class="meta">
+        <span>{animation.dimensions}</span>
+        <span>{animation.frames} frames</span>
+        <span>{animation.fps} fps</span>
+        <span>{animation.paletteColors} colors</span>
+        <span>{animation.bytes.toLocaleString()} bytes</span>
+      </div>
+      <p class="status">Loading preview...</p>
+    </div>
+  </article>
+</li>
+
+<style>
+  li::marker {
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  .animation-card {
+    display: grid;
+    grid-template-columns: minmax(72px, 104px) 1fr;
+    gap: 12px;
+    min-height: 128px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.82);
+    padding: 12px;
+    box-shadow: 0 12px 30px rgba(23, 33, 29, 0.08);
+    list-style: none;
+  }
+
+  canvas {
+    width: 100%;
+    height: auto;
+    align-self: start;
+    border: 1px solid #c9d2cc;
+    border-radius: 4px;
+    background: #151a17;
+    image-rendering: pixelated;
+  }
+
+  .details {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .details h3 {
+    overflow-wrap: anywhere;
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.9rem;
+  }
+
+  .links a {
+    color: var(--accent-strong);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .links a:hover {
+    text-decoration: underline;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .meta span {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.68);
+    padding: 6px 10px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .status {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  @media (max-width: 560px) {
+    .animation-card {
+      grid-template-columns: 88px 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,232 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17211d;
+        --muted: #5d6962;
+        --line: #d8ded8;
+        --panel: #ffffff;
+        --page: #f3f0e7;
+        --accent: #126f62;
+        --accent-strong: #0a4d45;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(135deg, rgba(18, 111, 98, 0.10), transparent 34rem),
+          radial-gradient(circle at top right, rgba(232, 169, 73, 0.16), transparent 26rem),
+          var(--page);
+        font-family: "Aptos", "Segoe UI", sans-serif;
+        line-height: 1.45;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 40px 0 24px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 6vw, 4rem);
+        line-height: 0.95;
+        max-width: 760px;
+      }
+
+      .summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+      }
+
+      .summary span,
+      .meta span,
+      .manifest-title span {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.68);
+        padding: 6px 10px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .tools-links {
+        margin-top: 20px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .tools-links a {
+        color: var(--accent-strong);
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-block;
+        padding: 8px 16px;
+        background: rgba(18, 111, 98, 0.08);
+        border-radius: 4px;
+      }
+
+      .tools-links a:hover {
+        background: rgba(18, 111, 98, 0.15);
+        text-decoration: underline;
+      }
+
+      main {
+        display: grid;
+        gap: 28px;
+        padding: 0 0 40px;
+      }
+
+      section {
+        display: grid;
+        gap: 14px;
+      }
+
+      .manifest-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 10px;
+        padding-top: 10px;
+      }
+
+      .manifest-title h2 {
+        font-size: 1.45rem;
+      }
+
+      .manifest-title a,
+      .links a,
+      footer a,
+      .details a {
+        color: var(--accent-strong);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .manifest-title a:hover,
+      .links a:hover,
+      footer a:hover,
+      .details a:hover {
+        text-decoration: underline;
+      }
+
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 0.9rem;
+      }
+
+      ol {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        list-style-position: inside;
+        margin: 0;
+        padding: 0;
+      }
+
+      li::marker {
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      .animation-card {
+        display: grid;
+        grid-template-columns: minmax(72px, 104px) 1fr;
+        gap: 12px;
+        min-height: 128px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.82);
+        padding: 12px;
+        box-shadow: 0 12px 30px rgba(23, 33, 29, 0.08);
+      }
+
+      canvas {
+        width: 100%;
+        height: auto;
+        align-self: start;
+        border: 1px solid #c9d2cc;
+        border-radius: 4px;
+        background: #151a17;
+        image-rendering: pixelated;
+      }
+
+      .details {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .details h3 {
+        overflow-wrap: anywhere;
+        font-size: 1.05rem;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      footer {
+        padding: 4px 0 36px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 560px) {
+        header,
+        main,
+        footer {
+          width: min(100% - 20px, 1120px);
+        }
+
+        .animation-card {
+          grid-template-columns: 88px 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
