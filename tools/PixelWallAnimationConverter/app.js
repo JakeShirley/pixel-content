@@ -1598,5 +1598,40 @@
     });
   }
 
+  async function loadFromUri() {
+    const params = new URLSearchParams(window.location.search);
+    const fileUrl = params.get("file");
+    
+    if (!fileUrl) {
+      return;
+    }
+
+    try {
+      setBusy("Loading animation from URI...");
+      const response = await fetch(fileUrl);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const fileName = fileUrl.split("/").pop() || "animation";
+      
+      // Create a File-like object that our loaders can use
+      const file = {
+        name: fileName,
+        arrayBuffer: () => Promise.resolve(arrayBuffer),
+        slice: (start, end) => new Blob([arrayBuffer.slice(start, end)]),
+      };
+
+      handleFile(file);
+    } catch (error) {
+      setStatus(`Failed to load from URI: ${error.message}`);
+      els.exportBin.disabled = true;
+      els.exportGif.disabled = true;
+    }
+  }
+
   bindEvents();
+  loadFromUri();
 }());

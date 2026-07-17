@@ -510,17 +510,25 @@ function Write-ContentIndexHtml {
             heading.append(link);
 
             const detailNodes = [heading];
+            
+            const links = document.createElement("div");
+            links.className = "links";
+            
+            const converterLink = document.createElement("a");
+            converterLink.href = `converter/?file=../${animation.path}`;
+            converterLink.textContent = "Open in Converter";
+            links.append(converterLink);
+            
             if (animation.githubUrl) {
-                const links = document.createElement("div");
-                links.className = "links";
                 const githubLink = document.createElement("a");
                 githubLink.href = animation.githubUrl;
                 githubLink.textContent = "GitHub source";
                 githubLink.target = "_blank";
                 githubLink.rel = "noreferrer";
                 links.append(githubLink);
-                detailNodes.push(links);
             }
+            
+            detailNodes.push(links);
 
             const meta = document.createElement("div");
             meta.className = "meta";
