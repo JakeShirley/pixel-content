@@ -140,10 +140,17 @@ h2 {
 #sourceCanvas {
   display: block;
   width: 100%;
-  height: auto;
+  max-height: 72vh;
+  object-fit: contain;
+  aspect-ratio: var(--scene-aspect, 1);
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   touch-action: none;
+  cursor: grab;
+}
+
+#sourceCanvas:active {
+  cursor: grabbing;
 }
 
 .pixelGridOverlay {
@@ -223,6 +230,10 @@ input[type="range"] {
 
 .grid.two {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .grid .full {

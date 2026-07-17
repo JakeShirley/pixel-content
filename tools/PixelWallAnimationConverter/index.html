@@ -22,7 +22,7 @@
         </div>
 
         <div class="canvasShell">
-          <canvas id="sourceCanvas" width="640" height="360" aria-label="Animation crop preview"></canvas>
+          <canvas id="sourceCanvas" width="64" height="64" aria-label="Animation scene preview"></canvas>
           <div id="pixelGridOverlay" class="pixelGridOverlay" aria-hidden="true" hidden></div>
           <div id="emptyState" class="emptyState">Drop a GIF, PNG, WebP, or BIN here</div>
         </div>
@@ -49,17 +49,16 @@
         </div>
 
         <div class="controlBlock">
-          <h2>Crop</h2>
-          <div class="grid four">
-            <label>X<input id="cropX" type="number" min="0" value="0"></label>
-            <label>Y<input id="cropY" type="number" min="0" value="0"></label>
-            <label>W<input id="cropW" type="number" min="1" value="64"></label>
-            <label>H<input id="cropH" type="number" min="1" value="64"></label>
+          <h2>Image</h2>
+          <div class="grid three">
+            <label>X<input id="imageX" type="number" value="0"></label>
+            <label>Y<input id="imageY" type="number" value="0"></label>
+            <label>Scale %<input id="imageScale" type="number" min="1" max="1000" value="100"></label>
           </div>
           <div class="buttonRow">
-            <button id="fitCrop" type="button">Fit</button>
-            <button id="squareCrop" type="button">Square</button>
-            <button id="centerCrop" type="button">Center</button>
+            <button id="fitImage" type="button">Fit</button>
+            <button id="fillImage" type="button">Fill</button>
+            <button id="centerImage" type="button">Center</button>
           </div>
         </div>
 

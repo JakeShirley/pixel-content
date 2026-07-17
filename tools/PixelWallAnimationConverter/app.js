@@ -22,7 +22,7 @@
     frames: [],
     sourceWidth: 0,
     sourceHeight: 0,
-    crop: { x: 0, y: 0, width: 64, height: 64 },
+    transform: { x: 0, y: 0, scale: 1 },
     currentFrame: 0,
     playing: false,
     playTimer: 0,
@@ -42,17 +42,16 @@
     playPause: document.getElementById("playPause"),
     frameSlider: document.getElementById("frameSlider"),
     frameReadout: document.getElementById("frameReadout"),
-    cropX: document.getElementById("cropX"),
-    cropY: document.getElementById("cropY"),
-    cropW: document.getElementById("cropW"),
-    cropH: document.getElementById("cropH"),
+    imageX: document.getElementById("imageX"),
+    imageY: document.getElementById("imageY"),
+    imageScale: document.getElementById("imageScale"),
     pixelGridOverlay: document.getElementById("pixelGridOverlay"),
     binGeometry: document.getElementById("binGeometry"),
     autoGeometry: document.getElementById("autoGeometry"),
     swapGeometry: document.getElementById("swapGeometry"),
-    fitCrop: document.getElementById("fitCrop"),
-    squareCrop: document.getElementById("squareCrop"),
-    centerCrop: document.getElementById("centerCrop"),
+    fitImage: document.getElementById("fitImage"),
+    fillImage: document.getElementById("fillImage"),
+    centerImage: document.getElementById("centerImage"),
     outputSize: document.getElementById("outputSize"),
     fps: document.getElementById("fps"),
     loopCount: document.getElementById("loopCount"),
@@ -186,20 +185,33 @@
     els.emptyState.hidden = enabled;
   }
 
-  function setCrop(crop) {
-    const maxWidth = Math.max(1, state.sourceWidth || 1);
-    const maxHeight = Math.max(1, state.sourceHeight || 1);
-    const width = clamp(Math.round(crop.width), 1, maxWidth);
-    const height = clamp(Math.round(crop.height), 1, maxHeight);
-    const x = clamp(Math.round(crop.x), 0, maxWidth - width);
-    const y = clamp(Math.round(crop.y), 0, maxHeight - height);
-
-    state.crop = { x, y, width, height };
-    els.cropX.value = x;
-    els.cropY.value = y;
-    els.cropW.value = width;
-    els.cropH.value = height;
+  function setTransform(transform) {
+    const scale = clamp(Number(transform.scale) || 1, 0.01, 10);
+    const x = Math.round(Number(transform.x) || 0);
+    const y = Math.round(Number(transform.y) || 0);
+    state.transform = { x, y, scale };
+    els.imageX.value = String(x);
+    els.imageY.value = String(y);
+    els.imageScale.value = String(Math.round(scale * 100));
     drawPreview();
+  }
+
+  function fittedImageSize(mode = "contain") {
+    const { width: outputWidth, height: outputHeight } = selectedOutputSize();
+    const widthScale = outputWidth / Math.max(1, state.sourceWidth);
+    const heightScale = outputHeight / Math.max(1, state.sourceHeight);
+    const scale = mode === "cover" ? Math.max(widthScale, heightScale) : Math.min(widthScale, heightScale);
+    return { width: state.sourceWidth * scale, height: state.sourceHeight * scale };
+  }
+
+  function transformedImageRect() {
+    const fitted = fittedImageSize();
+    return {
+      x: state.transform.x,
+      y: state.transform.y,
+      width: fitted.width * state.transform.scale,
+      height: fitted.height * state.transform.scale,
+    };
   }
 
   function setFrame(index) {
@@ -215,16 +227,18 @@
     drawPreview();
   }
 
-  function resizeCanvasToSource(width, height) {
+  function resizeCanvasToOutput() {
+    const { width, height } = selectedOutputSize();
     els.canvas.width = width;
     els.canvas.height = height;
+    els.canvas.style.setProperty("--scene-aspect", String(width / height));
     ctx.imageSmoothingEnabled = false;
   }
 
-  function gridLineStep(crop, outputWidth, outputHeight) {
+  function gridLineStep(outputWidth, outputHeight) {
     const rect = els.canvas.getBoundingClientRect();
-    const cellCssWidth = rect.width ? (crop.width / els.canvas.width) * rect.width / outputWidth : 8;
-    const cellCssHeight = rect.height ? (crop.height / els.canvas.height) * rect.height / outputHeight : 8;
+    const cellCssWidth = rect.width ? rect.width / outputWidth : 8;
+    const cellCssHeight = rect.height ? rect.height / outputHeight : 8;
     let step = 1;
     while (Math.min(cellCssWidth * step, cellCssHeight * step) < 4 && step < Math.max(outputWidth, outputHeight)) {
       step *= 2;
@@ -232,17 +246,14 @@
     return step;
   }
 
-  function updatePixelGridOverlay(crop) {
+  function updatePixelGridOverlay() {
     const { width: outputWidth, height: outputHeight } = selectedOutputSize();
-    const step = gridLineStep(crop, outputWidth, outputHeight);
+    const step = gridLineStep(outputWidth, outputHeight);
     const majorStep = Math.max(8, step);
     const overlay = els.pixelGridOverlay;
 
     overlay.hidden = false;
-    overlay.style.left = `${(crop.x / els.canvas.width) * 100}%`;
-    overlay.style.top = `${(crop.y / els.canvas.height) * 100}%`;
-    overlay.style.width = `${(crop.width / els.canvas.width) * 100}%`;
-    overlay.style.height = `${(crop.height / els.canvas.height) * 100}%`;
+    overlay.style.inset = "0";
     overlay.style.setProperty("--grid-columns", String(outputWidth / step));
     overlay.style.setProperty("--grid-rows", String(outputHeight / step));
     overlay.style.setProperty("--major-grid-columns", String(outputWidth / majorStep));
@@ -256,22 +267,25 @@
       return;
     }
 
-    ctx.putImageData(state.frames[state.currentFrame].imageData, 0, 0);
-
-    const crop = state.crop;
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = state.sourceWidth;
+    sourceCanvas.height = state.sourceHeight;
+    sourceCanvas.getContext("2d").putImageData(state.frames[state.currentFrame].imageData, 0, 0);
+    const image = transformedImageRect();
     ctx.save();
-    ctx.fillStyle = "rgba(14, 20, 17, 0.48)";
-    ctx.beginPath();
-    ctx.rect(0, 0, els.canvas.width, els.canvas.height);
-    ctx.rect(crop.x, crop.y, crop.width, crop.height);
-    ctx.fill("evenodd");
-    updatePixelGridOverlay(crop);
+    ctx.fillStyle = els.background.value;
+    ctx.fillRect(0, 0, els.canvas.width, els.canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(sourceCanvas, image.x, image.y, image.width, image.height);
+    updatePixelGridOverlay();
     ctx.strokeStyle = "#fff6dc";
-    ctx.lineWidth = Math.max(2, Math.round(Math.min(els.canvas.width, els.canvas.height) / 180));
-    ctx.strokeRect(crop.x + 0.5, crop.y + 0.5, crop.width - 1, crop.height - 1);
+    ctx.lineWidth = Math.max(1, Math.min(els.canvas.width, els.canvas.height) / 64);
+    ctx.strokeRect(image.x + 0.5, image.y + 0.5, image.width - 1, image.height - 1);
     ctx.strokeStyle = "#1b7f6e";
-    ctx.setLineDash([8, 5]);
-    ctx.strokeRect(crop.x + 4.5, crop.y + 4.5, crop.width - 9, crop.height - 9);
+    ctx.fillStyle = "#1b7f6e";
+    const handleSize = Math.max(3, Math.min(els.canvas.width, els.canvas.height) / 16);
+    ctx.fillRect(image.x + image.width - handleSize / 2, image.y + image.height - handleSize / 2, handleSize, handleSize);
     ctx.restore();
   }
 
@@ -283,20 +297,11 @@
     };
   }
 
-  function cropHit(point) {
-    const crop = state.crop;
-    const edge = Math.max(8, Math.min(crop.width, crop.height) * 0.08);
-    const inside = point.x >= crop.x && point.x <= crop.x + crop.width && point.y >= crop.y && point.y <= crop.y + crop.height;
-    if (!inside) {
-      return "new";
-    }
-
-    const right = Math.abs(point.x - (crop.x + crop.width)) <= edge;
-    const bottom = Math.abs(point.y - (crop.y + crop.height)) <= edge;
-    if (right && bottom) {
-      return "resize";
-    }
-    return "move";
+  function transformHit(point) {
+    const image = transformedImageRect();
+    const edge = Math.max(4, Math.min(image.width, image.height) * 0.12);
+    const resize = Math.abs(point.x - (image.x + image.width)) <= edge && Math.abs(point.y - (image.y + image.height)) <= edge;
+    return resize ? "resize" : "move";
   }
 
   function beginDrag(event) {
@@ -305,9 +310,10 @@
     }
     const point = canvasPoint(event);
     state.drag = {
-      mode: cropHit(point),
+      mode: transformHit(point),
       start: point,
-      crop: { ...state.crop },
+      transform: { ...state.transform },
+      image: transformedImageRect(),
     };
     els.canvas.setPointerCapture(event.pointerId);
   }
@@ -320,19 +326,14 @@
     const point = canvasPoint(event);
     const dx = point.x - state.drag.start.x;
     const dy = point.y - state.drag.start.y;
-    const crop = state.drag.crop;
+    const transform = state.drag.transform;
 
     if (state.drag.mode === "move") {
-      setCrop({ ...crop, x: crop.x + dx, y: crop.y + dy });
-    } else if (state.drag.mode === "resize") {
-      setCrop({ ...crop, width: crop.width + dx, height: crop.height + dy });
+      setTransform({ ...transform, x: transform.x + dx, y: transform.y + dy });
     } else {
-      setCrop({
-        x: Math.min(state.drag.start.x, point.x),
-        y: Math.min(state.drag.start.y, point.y),
-        width: Math.abs(dx),
-        height: Math.abs(dy),
-      });
+      const widthScale = (state.drag.image.width + dx) / Math.max(1, state.drag.image.width);
+      const heightScale = (state.drag.image.height + dy) / Math.max(1, state.drag.image.height);
+      setTransform({ ...transform, scale: transform.scale * Math.max(widthScale, heightScale) });
     }
   }
 
@@ -719,11 +720,11 @@
     }));
     state.sourceWidth = width;
     state.sourceHeight = height;
-    resizeCanvasToSource(width, height);
     setOutputSize(width, height);
+    resizeCanvasToOutput();
     els.binGeometry.value = dimensionKey(width, height);
     renderPalette(bin.palette);
-    setCrop({ x: 0, y: 0, width, height });
+    fitImage();
     setFrame(Math.min(state.currentFrame, state.frames.length - 1));
     updateStatusPreview();
   }
@@ -773,14 +774,13 @@
     state.frames = decoded.frames;
     state.sourceWidth = decoded.width;
     state.sourceHeight = decoded.height;
-    resizeCanvasToSource(decoded.width, decoded.height);
+    resizeCanvasToOutput();
 
     els.frameSlider.max = String(Math.max(0, decoded.frames.length - 1));
     setLoadedControls(decoded.frames.length > 0, decoded.frames.length);
 
     els.fps.value = String(Math.min(sourceFps(decoded.frames), DEFAULT_FPS));
-    const outputSize = selectedOutputSize();
-    setCrop(fitCropToAspect(decoded.width, decoded.height, outputSize.width, outputSize.height));
+    fitImage();
     setFrame(0);
     updateStatusPreview();
   }
@@ -798,14 +798,13 @@
     state.frames = decoded.frames;
     state.sourceWidth = decoded.width;
     state.sourceHeight = decoded.height;
-    resizeCanvasToSource(decoded.width, decoded.height);
+    resizeCanvasToOutput();
 
     els.frameSlider.max = String(Math.max(0, decoded.frames.length - 1));
     setLoadedControls(decoded.frames.length > 0, decoded.frames.length);
 
     els.fps.value = String(Math.min(sourceFps(decoded.frames), DEFAULT_FPS));
-    const outputSize = selectedOutputSize();
-    setCrop(fitCropToAspect(decoded.width, decoded.height, outputSize.width, outputSize.height));
+    fitImage();
     setFrame(0);
     updateStatusPreview();
   }
@@ -823,28 +822,15 @@
     state.frames = decoded.frames;
     state.sourceWidth = decoded.width;
     state.sourceHeight = decoded.height;
-    resizeCanvasToSource(decoded.width, decoded.height);
+    resizeCanvasToOutput();
 
     els.frameSlider.max = String(Math.max(0, decoded.frames.length - 1));
     setLoadedControls(decoded.frames.length > 0, decoded.frames.length);
 
     els.fps.value = String(Math.min(sourceFps(decoded.frames), DEFAULT_FPS));
-    const outputSize = selectedOutputSize();
-    setCrop(fitCropToAspect(decoded.width, decoded.height, outputSize.width, outputSize.height));
+    fitImage();
     setFrame(0);
     updateStatusPreview();
-  }
-
-  function fitCropToAspect(width, height, targetWidth, targetHeight) {
-    const targetRatio = targetWidth / targetHeight;
-    const sourceRatio = width / height;
-    if (sourceRatio > targetRatio) {
-      const cropWidth = Math.round(height * targetRatio);
-      return { x: Math.round((width - cropWidth) / 2), y: 0, width: cropWidth, height };
-    }
-
-    const cropHeight = Math.round(width / targetRatio);
-    return { x: 0, y: Math.round((height - cropHeight) / 2), width, height: cropHeight };
   }
 
   function updateStatusPreview() {
@@ -875,7 +861,7 @@
     const estimatedWrites = totalPixels * toInt(els.fps, DEFAULT_FPS);
     setStatus([
       `source: ${state.sourceWidth}x${state.sourceHeight}, ${state.frames.length} frames, ${sourceFps(state.frames)} fps`,
-      `crop: ${state.crop.x},${state.crop.y} ${state.crop.width}x${state.crop.height}`,
+      `image: ${state.transform.x},${state.transform.y} at ${Math.round(state.transform.scale * 100)}%`,
       `output: ${outputWidth}x${outputHeight}, ${count} frames, ${toInt(els.fps, DEFAULT_FPS)} fps`,
       `worst-case load: ${estimatedWrites.toLocaleString()} pixel writes/sec`,
       `encoding: ${predictiveModeLabel(els.predictiveMode.value)}`,
@@ -965,6 +951,7 @@
     exportCanvas.height = outputHeight;
     exportCtx.imageSmoothingEnabled = true;
     exportCtx.imageSmoothingQuality = "high";
+    const imageRect = transformedImageRect();
 
     const frames = [];
     for (const frameIndex of frameIndices) {
@@ -973,14 +960,10 @@
       exportCtx.fillRect(0, 0, outputWidth, outputHeight);
       exportCtx.drawImage(
         sourceCanvas,
-        state.crop.x,
-        state.crop.y,
-        state.crop.width,
-        state.crop.height,
-        0,
-        0,
-        outputWidth,
-        outputHeight
+        imageRect.x,
+        imageRect.y,
+        imageRect.width,
+        imageRect.height
       );
 
       const image = exportCtx.getImageData(0, 0, outputWidth, outputHeight).data;
@@ -1467,45 +1450,47 @@
     }
   }
 
-  function syncCropFromInputs() {
-    setCrop({
-      x: toInt(els.cropX, state.crop.x),
-      y: toInt(els.cropY, state.crop.y),
-      width: toInt(els.cropW, state.crop.width),
-      height: toInt(els.cropH, state.crop.height),
+  function syncTransformFromInputs() {
+    setTransform({
+      x: toInt(els.imageX, state.transform.x),
+      y: toInt(els.imageY, state.transform.y),
+      scale: toInt(els.imageScale, Math.round(state.transform.scale * 100)) / 100,
     });
     updateStatusPreview();
   }
 
-  function fitCrop() {
+  function fitImage() {
     if (!state.sourceWidth || !state.sourceHeight) {
       return;
     }
-    const outputSize = selectedOutputSize();
-    setCrop(fitCropToAspect(state.sourceWidth, state.sourceHeight, outputSize.width, outputSize.height));
+    const output = selectedOutputSize();
+    const fitted = fittedImageSize();
+    setTransform({ x: (output.width - fitted.width) / 2, y: (output.height - fitted.height) / 2, scale: 1 });
     updateStatusPreview();
   }
 
   function syncOutputSize() {
-    fitCrop();
+    resizeCanvasToOutput();
+    fitImage();
     updateStatusPreview();
   }
 
-  function squareCrop() {
+  function fillImage() {
     if (!state.sourceWidth || !state.sourceHeight) {
       return;
     }
-    const side = Math.min(state.sourceWidth, state.sourceHeight);
-    setCrop({ x: (state.sourceWidth - side) / 2, y: (state.sourceHeight - side) / 2, width: side, height: side });
+    const output = selectedOutputSize();
+    const fitted = fittedImageSize();
+    const covered = fittedImageSize("cover");
+    const scale = covered.width / Math.max(1, fitted.width);
+    setTransform({ x: (output.width - covered.width) / 2, y: (output.height - covered.height) / 2, scale });
     updateStatusPreview();
   }
 
-  function centerCrop() {
-    setCrop({
-      ...state.crop,
-      x: (state.sourceWidth - state.crop.width) / 2,
-      y: (state.sourceHeight - state.crop.height) / 2,
-    });
+  function centerImage() {
+    const output = selectedOutputSize();
+    const image = transformedImageRect();
+    setTransform({ ...state.transform, x: (output.width - image.width) / 2, y: (output.height - image.height) / 2 });
     updateStatusPreview();
   }
 
@@ -1558,7 +1543,7 @@
     els.maxFrames.value = String(DEFAULT_MAX_FRAMES);
     els.maxColors.value = String(DEFAULT_MAX_COLORS);
     els.predictiveMode.value = "writes";
-    drawPreview();
+    syncOutputSize();
     updateStatusPreview();
   }
 
@@ -1570,9 +1555,13 @@
       setFrame(toInt(els.frameSlider, 0));
     });
 
-    [els.cropX, els.cropY, els.cropW, els.cropH].forEach((input) => input.addEventListener("input", syncCropFromInputs));
-    [els.fps, els.loopCount, els.maxColors, els.background].forEach((input) => {
+    [els.imageX, els.imageY, els.imageScale].forEach((input) => input.addEventListener("input", syncTransformFromInputs));
+    [els.fps, els.loopCount, els.maxColors].forEach((input) => {
       input.addEventListener("input", updateStatusPreview);
+    });
+    els.background.addEventListener("input", () => {
+      drawPreview();
+      updateStatusPreview();
     });
     els.outputSize.addEventListener("change", syncOutputSize);
     els.binGeometry.addEventListener("change", syncBinGeometry);
@@ -1585,9 +1574,9 @@
     });
     els.maxFrames.addEventListener("input", updateStatusPreview);
     els.panelDefaults.addEventListener("click", applyPanelDefaults);
-    els.fitCrop.addEventListener("click", fitCrop);
-    els.squareCrop.addEventListener("click", squareCrop);
-    els.centerCrop.addEventListener("click", centerCrop);
+    els.fitImage.addEventListener("click", fitImage);
+    els.fillImage.addEventListener("click", fillImage);
+    els.centerImage.addEventListener("click", centerImage);
     els.exportBin.addEventListener("click", exportBin);
     els.exportGif.addEventListener("click", exportGif);
 
