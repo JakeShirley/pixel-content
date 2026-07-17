@@ -178,9 +178,9 @@ function chip(text: string) {
     document.querySelectorAll("[data-animation-preview]").forEach((canvas) => {
       const canvasEl = canvas as HTMLCanvasElement;
       const animationPath = canvasEl.getAttribute("data-animation-preview");
-      const statusEl = canvasEl.nextElementSibling as HTMLElement;
+      const statusEl = canvasEl.closest(".animation-card")?.querySelector(".status");
       
-      if (animationPath) {
+      if (animationPath && statusEl instanceof HTMLElement) {
         renderAnimationPreview(animationPath, canvasEl, statusEl);
       }
     });
