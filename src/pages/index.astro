@@ -30,9 +30,21 @@ function chip(text: string) {
       <section>
         <div class="manifest-title">
           <h2>{dimensions}</h2>
-          <a href={`manifest/${dimensions}`}>manifest/{dimensions}</a>
+          <button type="button" data-manifest-open={`manifest-${dimensions}`}>
+            manifest/{dimensions}
+          </button>
           <span>{chip(`${names.length} item${names.length === 1 ? '' : 's'}`)}</span>
         </div>
+        <dialog id={`manifest-${dimensions}`} class="manifest-dialog">
+          <div class="dialog-heading">
+            <h3>manifest/{dimensions}</h3>
+            <button type="button" class="dialog-close" data-manifest-close aria-label="Close manifest" title="Close">
+              &times;
+            </button>
+          </div>
+          <pre>{names.join('\n')}</pre>
+          <a href={`manifest/${dimensions}`}>Download manifest file</a>
+        </dialog>
         <ol start={0}>
           {names.map((publishedName, imageIndex) => {
             const animation = animationsByName.get(publishedName);
@@ -48,6 +60,94 @@ function chip(text: string) {
   <footer>
     <p>Preview rendered from deployed .bin bytes.</p>
   </footer>
+
+  <style>
+    .manifest-title button {
+      border: 0;
+      background: none;
+      padding: 0;
+      color: var(--accent-strong);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .manifest-title button:hover {
+      text-decoration: underline;
+    }
+
+    .manifest-dialog {
+      width: min(560px, calc(100% - 32px));
+      max-height: min(720px, calc(100% - 32px));
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 20px;
+      color: var(--ink);
+      box-shadow: 0 24px 70px rgba(23, 33, 29, 0.24);
+    }
+
+    .manifest-dialog::backdrop {
+      background: rgba(23, 33, 29, 0.52);
+    }
+
+    .dialog-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .dialog-heading h3 {
+      overflow-wrap: anywhere;
+      font-size: 1.15rem;
+    }
+
+    .dialog-close {
+      display: grid;
+      flex: 0 0 36px;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #f4f6f3;
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .dialog-close:hover {
+      background: #e8ece8;
+    }
+
+    .manifest-dialog pre {
+      max-height: 55vh;
+      overflow: auto;
+      margin: 0 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #f4f6f3;
+      padding: 14px;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .manifest-dialog > a {
+      color: var(--accent-strong);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .manifest-dialog > a:hover {
+      text-decoration: underline;
+    }
+  </style>
 
   <script>
     // Animation preview rendering
@@ -183,6 +283,31 @@ function chip(text: string) {
       if (animationPath && statusEl instanceof HTMLElement) {
         renderAnimationPreview(animationPath, canvasEl, statusEl);
       }
+    });
+
+    document.querySelectorAll("[data-manifest-open]").forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const dialogId = (trigger as HTMLElement).dataset.manifestOpen;
+        const dialog = dialogId ? document.getElementById(dialogId) : null;
+
+        if (dialog instanceof HTMLDialogElement) {
+          dialog.showModal();
+        }
+      });
+    });
+
+    document.querySelectorAll(".manifest-dialog").forEach((dialog) => {
+      if (!(dialog instanceof HTMLDialogElement)) return;
+
+      dialog.querySelector("[data-manifest-close]")?.addEventListener("click", () => {
+        dialog.close();
+      });
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+          dialog.close();
+        }
+      });
     });
   </script>
 </Layout>

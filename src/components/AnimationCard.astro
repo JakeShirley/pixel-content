@@ -16,6 +16,16 @@ interface Props {
 }
 
 const { animation, imageIndex } = Astro.props;
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+
+  const units = ['KB', 'MB', 'GB'];
+  const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)) - 1, units.length - 1);
+  const value = bytes / 1024 ** (unitIndex + 1);
+
+  return `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })} ${units[unitIndex]}`;
+}
 ---
 
 <li>
@@ -34,11 +44,10 @@ const { animation, imageIndex } = Astro.props;
         <a href={`converter/?file=../${animation.path}`}>Open in Converter</a>
       </div>
       <div class="meta">
-        <span>{animation.dimensions}</span>
         <span>{animation.frames} frames</span>
         <span>{animation.fps} fps</span>
         <span>{animation.paletteColors} colors</span>
-        <span>{animation.bytes.toLocaleString()} bytes</span>
+        <span>{formatBytes(animation.bytes)}</span>
       </div>
       <p class="status">Loading preview...</p>
     </div>
