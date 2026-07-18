@@ -12,10 +12,9 @@ interface Props {
     bytes: number;
     path: string;
   };
-  imageIndex: number;
 }
 
-const { animation, imageIndex } = Astro.props;
+const { animation } = Astro.props;
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;

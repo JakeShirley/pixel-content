@@ -1253,17 +1253,7 @@
     els.downloadLink.click();
   }
 
-  function bitsNeeded(value) {
-    let bits = 0;
-    let next = Math.max(1, value - 1);
-    while (next > 0) {
-      bits += 1;
-      next >>= 1;
-    }
-    return bits;
-  }
-
-  function lzwEncode(indices, colorCount) {
+  function lzwEncode(indices) {
     const minCodeSize = 8;
     const clearCode = 1 << minCodeSize;
     const endCode = clearCode + 1;
@@ -1346,7 +1336,7 @@
       pushU16LE(bytes, bin.width);
       pushU16LE(bytes, bin.height);
       bytes.push(0x00);
-      const encoded = lzwEncode(bin.indexedFrames[index], colorTableSize);
+      const encoded = lzwEncode(bin.indexedFrames[index]);
       bytes.push(encoded.minCodeSize);
       pushSubBlocks(bytes, encoded.bytes);
     }

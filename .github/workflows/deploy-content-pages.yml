@@ -11,6 +11,8 @@ on:
       - astro.config.mjs
       - astro-integration.mjs
       - package.json
+      - package-lock.json
+      - tsconfig.json
       - CONTENT_SERVER_FORMAT.md
       - .github/workflows/deploy-content-pages.yml
   schedule:
@@ -42,10 +44,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '18'
+          node-version: '24'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check Astro project
+        run: npm run check
 
       - name: Build site with Astro
         run: npm run build

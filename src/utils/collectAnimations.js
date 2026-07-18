@@ -1,8 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Read binary animation file and extract metadata
@@ -42,37 +39,6 @@ function readAnimationMetadata(filePath) {
 }
 
 /**
- * Infer animation dimensions from pixel count and frame structure
- */
-function inferDimensions(pixelCount) {
-  // Standard Pixel Wall panel sizes
-  const standardSizes = [
-    { width: 32, height: 32 },
-    { width: 32, height: 64 },
-    { width: 64, height: 32 },
-    { width: 64, height: 64 },
-    { width: 64, height: 128 },
-    { width: 128, height: 64 },
-    { width: 128, height: 128 },
-  ];
-
-  // Find exact match
-  for (const size of standardSizes) {
-    if (size.width * size.height === pixelCount) {
-      return size;
-    }
-  }
-
-  // Fallback to square
-  const side = Math.sqrt(pixelCount);
-  if (Number.isInteger(side)) {
-    return { width: side, height: side };
-  }
-
-  return null;
-}
-
-/**
  * Collect all animation metadata from assets/processed directory
  */
 export async function collectAnimationMetadata(baseDir = './assets/processed') {
@@ -92,8 +58,6 @@ export async function collectAnimationMetadata(baseDir = './assets/processed') {
       const relPath = path.join(relativePath, entry.name);
 
       if (entry.isDirectory()) {
-        // Check if this is a dimensions folder
-        const dimensionsMatch = entry.name.match(/^(\d+)x(\d+)$/);
         walkDir(fullPath, relPath);
       } else if (entry.name.endsWith('.bin')) {
         const fileName = path.basename(entry.name, '.bin');
@@ -105,20 +69,8 @@ export async function collectAnimationMetadata(baseDir = './assets/processed') {
           width = parseInt(dimensionsMatch[1], 10);
           height = parseInt(dimensionsMatch[2], 10);
         } else {
-          // Try to infer from file
-          try {
-            const meta = readAnimationMetadata(fullPath);
-            const inferredDim = inferDimensions(width * height || 4096);
-            if (!inferredDim) {
-              console.warn(`Could not infer dimensions for ${relPath}`);
-              return;
-            }
-            width = inferredDim.width;
-            height = inferredDim.height;
-          } catch (err) {
-            console.warn(`Skipping ${relPath}: ${err.message}`);
-            return;
-          }
+          console.warn(`Skipping ${relPath}: parent directory must use WIDTHxHEIGHT naming`);
+          return;
         }
 
         try {

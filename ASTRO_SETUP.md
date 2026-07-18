@@ -5,8 +5,8 @@ This project uses [Astro](https://astro.build/) for static site generation. Anim
 ## Local Development
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or equivalent package manager
+- Node.js 24+
+- npm 11+
 
 ### Installation
 
@@ -20,7 +20,15 @@ npm install
 npm run dev
 ```
 
-Starts a local development server at `http://localhost:3000` with hot reload enabled.
+Starts a local development server at `http://localhost:4321` with hot reload enabled.
+
+### Project Check
+
+```bash
+npm run check
+```
+
+Runs Astro diagnostics and strict TypeScript checking. The deployment workflow runs this before every production build.
 
 ### Production Build
 
@@ -110,9 +118,10 @@ This approach keeps animation files in one location (`assets/processed/`) and on
 
 The GitHub Actions workflow automatically:
 1. Installs Node.js dependencies
-2. Runs `npm run build` to generate the static site (including post-build integration)
-3. Copies the converter tool
-4. Deploys to GitHub Pages
+2. Runs `npm run check`
+3. Runs `npm run build` to generate the static site (including post-build integration)
+4. Copies the converter tool
+5. Deploys to GitHub Pages
 
 See `.github/workflows/deploy-content-pages.yml` for workflow details.
 

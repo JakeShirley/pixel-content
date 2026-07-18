@@ -7,6 +7,59 @@ export default function pixelWallIntegration() {
   return {
     name: 'pixel-wall-content',
     hooks: {
+      'astro:server:setup': async ({ server }) => {
+        const content = await collectAnimationMetadata('./assets/processed');
+        const animations = new Map(
+          content.animations.map((animation) => [`/${animation.path}`, animation.sourcePath]),
+        );
+        const manifests = new Map(
+          Object.entries(content.buckets).map(([dimensions, names]) => [
+            `/manifest/${dimensions}`,
+            `${names.join('\n')}\n`,
+          ]),
+        );
+        const converterDir = path.resolve('tools/PixelWallAnimationConverter');
+        const contentTypes = new Map([
+          ['.css', 'text/css; charset=utf-8'],
+          ['.html', 'text/html; charset=utf-8'],
+          ['.js', 'text/javascript; charset=utf-8'],
+        ]);
+
+        server.middlewares.use((request, response, next) => {
+          const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+          const animationPath = animations.get(pathname);
+
+          if (animationPath) {
+            response.setHeader('Content-Type', 'application/octet-stream');
+            fs.createReadStream(animationPath).pipe(response);
+            return;
+          }
+
+          const manifest = manifests.get(pathname);
+          if (manifest) {
+            response.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            response.end(manifest);
+            return;
+          }
+
+          if (pathname === '/converter' || pathname.startsWith('/converter/')) {
+            const relativePath = pathname.replace(/^\/converter\/?/, '') || 'index.html';
+            const filePath = path.resolve(converterDir, relativePath);
+            const relativeFilePath = path.relative(converterDir, filePath);
+
+            if (!relativeFilePath.startsWith('..') && !path.isAbsolute(relativeFilePath) && fs.existsSync(filePath)) {
+              response.setHeader(
+                'Content-Type',
+                contentTypes.get(path.extname(filePath)) ?? 'application/octet-stream',
+              );
+              fs.createReadStream(filePath).pipe(response);
+              return;
+            }
+          }
+
+          next();
+        });
+      },
       'astro:build:done': async ({ dir }) => {
         console.log('Post-build: Processing animation content...');
 

@@ -4,6 +4,7 @@ import AnimationCard from '../components/AnimationCard.astro';
 import { collectAnimationMetadata } from '../utils/collectAnimations';
 
 const content = await collectAnimationMetadata('./assets/processed');
+const buckets = content.buckets as Record<string, string[]>;
 const animationsByName = new Map(
   content.animations.map((anim) => [anim.publishedName, anim])
 );
@@ -18,7 +19,7 @@ function chip(text: string) {
     <h1>Pixel Wall Animation Content</h1>
     <div class="summary">
       <span>{chip(`${content.animations.length} animation${content.animations.length === 1 ? '' : 's'}`)}</span>
-      <span>{chip(`${Object.keys(content.buckets).length} manifest${Object.keys(content.buckets).length === 1 ? '' : 's'}`)}</span>
+      <span>{chip(`${Object.keys(buckets).length} manifest${Object.keys(buckets).length === 1 ? '' : 's'}`)}</span>
     </div>
     <div class="tools-links">
       <a href="converter/">Animation Converter Tool</a>
@@ -26,7 +27,7 @@ function chip(text: string) {
   </header>
   
   <main id="manifests">
-    {Object.entries(content.buckets).map(([dimensions, names]) => (
+    {Object.entries(buckets).map(([dimensions, names]) => (
       <section>
         <div class="manifest-title">
           <h2>{dimensions}</h2>
@@ -46,10 +47,10 @@ function chip(text: string) {
           <a href={`manifest/${dimensions}`}>Download manifest file</a>
         </dialog>
         <ol start={0}>
-          {names.map((publishedName, imageIndex) => {
+          {names.map((publishedName) => {
             const animation = animationsByName.get(publishedName);
             return animation ? (
-              <AnimationCard animation={animation} imageIndex={imageIndex} />
+              <AnimationCard animation={animation} />
             ) : null;
           })}
         </ol>
@@ -199,7 +200,7 @@ function chip(text: string) {
           const changedPixels = readU16BE(bytes, offset);
           offset += 2;
           const positionBytes = totalPixels > 256 ? 2 : 1;
-          const next = current.slice();
+          const next: Uint8Array = current.slice();
           for (let index = 0; index < changedPixels; index += 1) {
             const position = positionBytes === 2 ? readU16BE(bytes, offset) : bytes[offset];
             offset += positionBytes;
@@ -207,7 +208,7 @@ function chip(text: string) {
             offset += 1;
           }
           current = next;
-          frames.push(current.slice());
+          frames.push(next.slice());
         }
       }
 
