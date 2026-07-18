@@ -53,7 +53,6 @@ _site/
   content-index.json      # Animation metadata
   animations/             # .bin animation files (copied from assets/processed/)
   manifest/               # Dimension-based manifests (generated)
-  converter/              # Web-based animation editor
   _astro/                 # Generated CSS and JS assets
 ```
 
@@ -82,6 +81,7 @@ src/
     Layout.astro          # Page layout with styling
   components/
     AnimationCard.astro   # Animation card component
+    AnimationEditor.astro # Integrated animation editor tab
   utils/
     collectAnimations.js  # Animation metadata collection
 astro-integration.mjs     # Astro integration for post-build processing

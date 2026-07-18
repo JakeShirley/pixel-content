@@ -53,7 +53,7 @@ function formatBytes(bytes: number) {
         <a href={githubUrl}>{animation.name}</a>
       </h3>
       <div class="links">
-        <a href={`${basePath}converter/?file=../${animation.path}`}>Open in Animation Editor</a>
+        <a href={`${basePath}?tab=editor&file=${encodeURIComponent(animation.path)}`}>Open in Animation Editor</a>
       </div>
       <div class="meta">
         <span>{animation.frames} frames</span>

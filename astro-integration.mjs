@@ -23,13 +23,6 @@ export default function pixelWallIntegration() {
             `${names.join('\n')}\n`,
           ]),
         );
-        const converterDir = path.resolve('tools/PixelWallAnimationConverter');
-        const contentTypes = new Map([
-          ['.css', 'text/css; charset=utf-8'],
-          ['.html', 'text/html; charset=utf-8'],
-          ['.js', 'text/javascript; charset=utf-8'],
-        ]);
-
         server.middlewares.use((request, response, next) => {
           const requestPathname = new URL(request.url ?? '/', 'http://localhost').pathname;
           const normalizedBase = base === '/' ? '' : `/${base.replace(/^\/+|\/+$/g, '')}`;
@@ -49,21 +42,6 @@ export default function pixelWallIntegration() {
             response.setHeader('Content-Type', 'text/plain; charset=utf-8');
             response.end(manifest);
             return;
-          }
-
-          if (pathname === '/converter' || pathname.startsWith('/converter/')) {
-            const relativePath = pathname.replace(/^\/converter\/?/, '') || 'index.html';
-            const filePath = path.resolve(converterDir, relativePath);
-            const relativeFilePath = path.relative(converterDir, filePath);
-
-            if (!relativeFilePath.startsWith('..') && !path.isAbsolute(relativeFilePath) && fs.existsSync(filePath)) {
-              response.setHeader(
-                'Content-Type',
-                contentTypes.get(path.extname(filePath)) ?? 'application/octet-stream',
-              );
-              fs.createReadStream(filePath).pipe(response);
-              return;
-            }
           }
 
           next();

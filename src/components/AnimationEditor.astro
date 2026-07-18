@@ -1,0 +1,110 @@
+---
+import '../../tools/PixelWallAnimationConverter/styles.css';
+---
+
+<div class="editorRoot">
+  <section class="workspace">
+    <div class="stagePanel">
+      <div class="stageHead">
+        <div>
+          <p class="eyebrow">Pixel Wall</p>
+          <h2>Animation Editor</h2>
+        </div>
+        <label class="filePicker">
+          <input id="gifInput" type="file" accept="image/gif,image/png,image/webp,.gif,.png,.webp,.bin,application/octet-stream" />
+          <span>Import GIF/PNG/WebP/BIN</span>
+        </label>
+      </div>
+
+      <div class="canvasShell">
+        <canvas id="sourceCanvas" width="64" height="64" aria-label="Animation scene preview"></canvas>
+        <div id="pixelGridOverlay" class="pixelGridOverlay" aria-hidden="true" hidden></div>
+        <div id="emptyState" class="emptyState">Drop a GIF, PNG, WebP, or BIN here</div>
+      </div>
+
+      <div class="timeline">
+        <button id="playPause" type="button" class="toolButton" disabled>Play</button>
+        <input id="frameSlider" type="range" min="0" max="0" value="0" disabled />
+        <span id="frameReadout">0 / 0</span>
+      </div>
+    </div>
+
+    <aside class="controlsPanel">
+      <div class="controlBlock">
+        <h3>Source</h3>
+        <label class="full">BIN geometry
+          <select id="binGeometry" disabled>
+            <option value="">No BIN loaded</option>
+          </select>
+        </label>
+        <div class="buttonRow two">
+          <button id="autoGeometry" type="button" disabled>Auto detect</button>
+          <button id="swapGeometry" type="button" disabled>Swap W/H</button>
+        </div>
+      </div>
+
+      <div class="controlBlock">
+        <h3>Image</h3>
+        <div class="grid three">
+          <label>X<input id="imageX" type="number" value="0" /></label>
+          <label>Y<input id="imageY" type="number" value="0" /></label>
+          <label>Scale %<input id="imageScale" type="number" min="1" max="1000" value="100" /></label>
+        </div>
+        <div class="buttonRow">
+          <button id="fitImage" type="button">Fit</button>
+          <button id="fillImage" type="button">Fill</button>
+          <button id="centerImage" type="button">Center</button>
+        </div>
+      </div>
+
+      <div class="controlBlock">
+        <h3>Output</h3>
+        <div class="grid two">
+          <label class="full">Size
+            <select id="outputSize">
+              <option value="32x32">32 x 32</option>
+              <option value="32x64">32 x 64</option>
+              <option value="64x64" selected>64 x 64</option>
+              <option value="64x32">64 x 32</option>
+              <option value="64x128">64 x 128</option>
+              <option value="128x64">128 x 64</option>
+              <option value="128x128">128 x 128</option>
+            </select>
+          </label>
+          <label>FPS<input id="fps" type="number" min="1" max="60" value="10" /></label>
+          <label>Loops<input id="loopCount" type="number" min="0" max="255" value="0" /></label>
+        </div>
+        <label class="selectLine">Predictive encoding
+          <select id="predictiveMode">
+            <option value="size" selected>Auto, smaller file</option>
+            <option value="writes">Prefer fewer pixel writes</option>
+            <option value="off">Keyframes only</option>
+          </select>
+        </label>
+        <label class="checkLine"><input id="limitFrames" type="checkbox" checked /> Sample frames</label>
+        <input id="maxFrames" type="number" min="1" max="255" value="21" />
+        <button id="panelDefaults" type="button" class="wideButton">Panel defaults</button>
+      </div>
+
+      <div class="controlBlock">
+        <h3>Palette</h3>
+        <div class="grid two">
+          <label>Colors<input id="maxColors" type="number" min="2" max="256" value="128" /></label>
+          <label>Background<input id="background" type="color" value="#000000" /></label>
+        </div>
+        <div id="paletteSwatches" class="paletteSwatches" aria-label="Palette preview"></div>
+      </div>
+
+      <div class="exportBlock">
+        <div class="exportButtons">
+          <button id="exportBin" type="button" class="exportButton" disabled>Export .bin</button>
+          <button id="exportGif" type="button" class="exportButton secondary" disabled>Export GIF</button>
+        </div>
+        <a id="downloadLink" hidden></a>
+        <pre id="status" class="status">No GIF, PNG, WebP, or BIN loaded.</pre>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<script src="../../tools/PixelWallAnimationConverter/app.js"></script>

@@ -35,7 +35,7 @@
   };
 
   const els = {
-    body: document.body,
+    body: document.querySelector(".editorRoot"),
     gifInput: document.getElementById("gifInput"),
     canvas: document.getElementById("sourceCanvas"),
     emptyState: document.getElementById("emptyState"),

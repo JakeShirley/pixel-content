@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import AnimationCard from '../components/AnimationCard.astro';
+import AnimationEditor from '../components/AnimationEditor.astro';
 import { collectAnimationMetadata } from '../utils/collectAnimations';
 
 const content = await collectAnimationMetadata('./assets/processed');
@@ -39,21 +40,24 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
 <Layout title="Pixel Wall Animation Content">
   <header class="site-header">
     <div class="header-inner">
-      <a class="identity" href="#gallery" aria-label="Pixel Wall animation gallery">
+      <a class="identity" href={basePath} aria-label="Pixel Wall animation gallery">
         <span class="pixel-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
         <span><h1>Pixel Wall</h1><small>Animation Gallery</small></span>
       </a>
-      <nav aria-label="Filter animations by display size">
+      <nav class="gallery-filters" aria-label="Filter animations by display size" data-gallery-ui>
         <button type="button" data-gallery-filter="all" aria-pressed="true">All</button>
         {dimensions.map((dimension) => (
           <button type="button" data-gallery-filter={dimension} aria-pressed="false">{dimension}</button>
         ))}
       </nav>
-      <a class="editor-link" href={`${basePath}converter/`}>Animation Editor</a>
+      <div class="view-tabs" role="tablist" aria-label="Pixel Wall content views">
+        <button type="button" role="tab" id="gallery-tab" aria-controls="gallery-view" aria-selected="true" data-view-tab="gallery">Gallery</button>
+        <button type="button" role="tab" id="editor-tab" aria-controls="editor-view" aria-selected="false" data-view-tab="editor">Editor</button>
+      </div>
     </div>
   </header>
 
-  <div class="collection-bar">
+  <div class="collection-bar" data-gallery-ui>
     <p><strong data-gallery-count>{content.animations.length}</strong> gallery animations</p>
     <div class="manifest-links" aria-label="Animation manifests">
       <span>Manifests</span>
@@ -76,7 +80,7 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
         </dialog>
   ))}
 
-  <main id="gallery">
+  <main id="gallery-view" role="tabpanel" aria-labelledby="gallery-tab" data-view-panel="gallery">
     <section class="gallery-section" data-gallery-section="on-display">
       <div class="section-heading">
         <div>
@@ -115,8 +119,12 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
       </ol>
     </section>
   </main>
+
+  <main id="editor-view" role="tabpanel" aria-labelledby="editor-tab" data-view-panel="editor" hidden>
+    <AnimationEditor />
+  </main>
   
-  <footer>
+  <footer data-gallery-ui>
     <p>Preview rendered from deployed .bin bytes.</p>
   </footer>
 
@@ -177,7 +185,7 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
     .pixel-mark i:nth-child(4) { grid-column: 3; grid-row: 2; }
     .pixel-mark i:nth-child(5) { grid-column: 2; grid-row: 3; }
 
-    nav {
+    .gallery-filters {
       display: flex;
       align-items: center;
       justify-self: end;
@@ -188,11 +196,11 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
       white-space: nowrap;
     }
 
-    nav::-webkit-scrollbar {
+    .gallery-filters::-webkit-scrollbar {
       display: none;
     }
 
-    nav button,
+    .gallery-filters button,
     .manifest-links button {
       border: 0;
       background: none;
@@ -203,28 +211,54 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
       text-decoration: none;
     }
 
-    nav button:hover,
-    nav button[aria-pressed="true"] {
+    .gallery-filters button:hover,
+    .gallery-filters button[aria-pressed="true"] {
       color: var(--ink);
     }
 
-    nav button[aria-pressed="true"] {
+    .gallery-filters button[aria-pressed="true"] {
       box-shadow: inset 0 -1px var(--accent);
     }
 
-    .editor-link {
-      padding: 8px 11px;
+    .view-tabs {
+      display: flex;
+      justify-self: end;
+      width: fit-content;
       border: 1px solid var(--line);
       border-radius: 2px;
-      color: var(--ink);
-      font: 0.76rem/1 var(--font-ui);
-      text-decoration: none;
-      white-space: nowrap;
     }
 
-    .editor-link:hover {
-      border-color: var(--accent);
-      color: var(--accent-strong);
+    .view-tabs button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font: 0.76rem/1 var(--font-ui);
+    }
+
+    .view-tabs button + button {
+      border-left: 1px solid var(--line);
+    }
+
+    .view-tabs button[aria-selected="true"] {
+      background: var(--ink);
+      color: var(--panel);
+    }
+
+    .view-tabs button:hover:not([aria-selected="true"]) {
+      color: var(--ink);
+    }
+
+    [data-view-panel="editor"] {
+      width: min(1440px, calc(100% - 40px));
+      padding-top: 28px;
+    }
+
+    [data-view-panel][hidden],
+    [data-gallery-ui][hidden] {
+      display: none;
     }
 
     .collection-bar {
@@ -379,7 +413,7 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
         padding: 12px 0;
       }
 
-      nav {
+      .gallery-filters {
         grid-column: 1 / -1;
         grid-row: 2;
         justify-self: stretch;
@@ -387,7 +421,7 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
         padding-bottom: 2px;
       }
 
-      .editor-link {
+      .view-tabs {
         grid-column: 2;
         grid-row: 1;
       }
@@ -405,48 +439,100 @@ const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
   </style>
 
   <script>
+    const viewTabs = document.querySelectorAll<HTMLElement>("[data-view-tab]");
+    const viewPanels = document.querySelectorAll<HTMLElement>("[data-view-panel]");
+    const galleryUi = document.querySelectorAll<HTMLElement>("[data-gallery-ui]");
+
+    function selectView(view: string, updateUrl = true) {
+      viewTabs.forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab.dataset.viewTab === view));
+      });
+      viewPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.viewPanel !== view;
+      });
+      galleryUi.forEach((element) => {
+        element.hidden = view !== "gallery";
+      });
+
+      if (updateUrl) {
+        const url = new URL(window.location.href);
+        if (view === "editor") url.searchParams.set("tab", "editor");
+        else url.searchParams.delete("tab");
+        window.history.replaceState({}, "", url);
+      }
+    }
+
     const filterButtons = document.querySelectorAll("[data-gallery-filter]");
     const galleryItems = document.querySelectorAll("[data-animation-dimensions]");
     const galleryLists = document.querySelectorAll("[data-gallery-list]");
     const galleryCount = document.querySelector("[data-gallery-count]");
 
-    filterButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const filter = (button as HTMLElement).dataset.galleryFilter;
-        let visibleCount = 0;
+    function selectGalleryFilter(filter: string, updateUrl = true) {
+      const activeButton = [...filterButtons].find(
+        (button) => (button as HTMLElement).dataset.galleryFilter === filter
+      );
+      const selectedFilter = activeButton ? filter : "all";
+      let visibleCount = 0;
 
-        galleryItems.forEach((item) => {
-          const matches = filter === "all" || (item as HTMLElement).dataset.animationDimensions === filter;
-          (item as HTMLElement).hidden = !matches;
-          if (matches) visibleCount += 1;
-        });
+      galleryItems.forEach((item) => {
+        const matches = selectedFilter === "all" || (item as HTMLElement).dataset.animationDimensions === selectedFilter;
+        (item as HTMLElement).hidden = !matches;
+        if (matches) visibleCount += 1;
+      });
 
-        const orderAttribute = filter === "all" ? "galleryOrder" : "deployedIndex";
-        galleryLists.forEach((list) => {
-          const displayState = (list as HTMLElement).dataset.galleryList;
-          const sectionItems = [...galleryItems]
-            .filter((item) => (item as HTMLElement).dataset.displayState === displayState)
-            .sort((left, right) => {
-              const leftOrder = Number((left as HTMLElement).dataset[orderAttribute]);
-              const rightOrder = Number((right as HTMLElement).dataset[orderAttribute]);
-              return leftOrder - rightOrder;
-            });
+      const orderAttribute = selectedFilter === "all" ? "galleryOrder" : "deployedIndex";
+      galleryLists.forEach((list) => {
+        const displayState = (list as HTMLElement).dataset.galleryList;
+        const sectionItems = [...galleryItems]
+          .filter((item) => (item as HTMLElement).dataset.displayState === displayState)
+          .sort((left, right) => {
+            const leftOrder = Number((left as HTMLElement).dataset[orderAttribute]);
+            const rightOrder = Number((right as HTMLElement).dataset[orderAttribute]);
+            return leftOrder - rightOrder;
+          });
 
-          sectionItems.forEach((item) => list.append(item));
+        sectionItems.forEach((item) => list.append(item));
 
-          const sectionCount = document.querySelector(`[data-section-count="${displayState}"]`);
-          if (sectionCount) {
-            sectionCount.textContent = String(sectionItems.filter((item) => !(item as HTMLElement).hidden).length);
-          }
-        });
+        const sectionCount = document.querySelector(`[data-section-count="${displayState}"]`);
+        if (sectionCount) {
+          sectionCount.textContent = String(sectionItems.filter((item) => !(item as HTMLElement).hidden).length);
+        }
+      });
 
-        filterButtons.forEach((candidate) => {
-          candidate.setAttribute("aria-pressed", String(candidate === button));
-        });
+      filterButtons.forEach((candidate) => {
+        candidate.setAttribute("aria-pressed", String(candidate === activeButton || (!activeButton && (candidate as HTMLElement).dataset.galleryFilter === "all")));
+      });
 
-        if (galleryCount) galleryCount.textContent = String(visibleCount);
+      if (galleryCount) galleryCount.textContent = String(visibleCount);
+
+      if (updateUrl) {
+        const url = new URL(window.location.href);
+        if (selectedFilter === "all") url.searchParams.delete("tab");
+        else url.searchParams.set("tab", selectedFilter);
+        url.searchParams.delete("file");
+        window.history.replaceState({}, "", url);
+      }
+    }
+
+    viewTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const view = tab.dataset.viewTab ?? "gallery";
+        selectView(view, view === "editor");
+        if (view === "gallery") selectGalleryFilter("all");
       });
     });
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectGalleryFilter((button as HTMLElement).dataset.galleryFilter ?? "all");
+      });
+    });
+
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialTab = initialParams.get("tab") ?? "all";
+    const initialView = initialTab === "editor" || initialParams.has("file") ? "editor" : "gallery";
+    selectView(initialView, false);
+    selectGalleryFilter(initialView === "gallery" ? initialTab : "all", false);
 
     // Animation preview rendering
     function decodeAnimationBinary(bytes: Uint8Array, width: number, height: number) {
