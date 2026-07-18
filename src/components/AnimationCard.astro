@@ -19,6 +19,7 @@ interface Props {
 
 const { animation, galleryOrder, displayState } = Astro.props;
 const githubUrl = `https://github.com/JakeShirley/pixel-content/blob/main/assets/processed/${encodeURIComponent(animation.dimensions)}/${encodeURIComponent(animation.name)}.bin`;
+const basePath = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -52,7 +53,7 @@ function formatBytes(bytes: number) {
         <a href={githubUrl}>{animation.name}</a>
       </h3>
       <div class="links">
-        <a href={`converter/?file=../${animation.path}`}>Open in Converter</a>
+        <a href={`${basePath}converter/?file=../${animation.path}`}>Open in Animation Editor</a>
       </div>
       <div class="meta">
         <span>{animation.frames} frames</span>

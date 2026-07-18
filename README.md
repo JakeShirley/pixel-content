@@ -4,7 +4,7 @@ Tools for preparing, inspecting, and serving Pixel Wall dynamic animation conten
 
 ## Tools
 
-- `PixelWallAnimationConverter/`: browser-based GIF and `.bin` converter.
+- `PixelWallAnimationConverter/`: browser-based animation editor for GIF, PNG, WebP, and `.bin` files.
 - `PixelWallAnimationSpriteSheet/`: command-line `.bin` decoder that writes PNG sprite sheets.
 - `PixelWallContent/`: PowerShell cmdlets for inspecting `.bin` files and building the static content tree for GitHub Pages.
 - `Serve-ContentUpdates.ps1`: local static server helper for testing Pixel Wall dynamic content updates.

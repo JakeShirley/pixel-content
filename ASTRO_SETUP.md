@@ -53,7 +53,7 @@ _site/
   content-index.json      # Animation metadata
   animations/             # .bin animation files (copied from assets/processed/)
   manifest/               # Dimension-based manifests (generated)
-  converter/              # Web-based animation converter
+  converter/              # Web-based animation editor
   _astro/                 # Generated CSS and JS assets
 ```
 
@@ -96,7 +96,7 @@ tools/
 ### AnimationCard.astro
 Renders individual animation cards with:
 - Canvas preview (rendered client-side)
-- "Open in Converter" link for editing
+- "Open in Animation Editor" link for editing
 - Animation metadata (dimensions, fps, colors, size)
 
 ### collectAnimations.js
@@ -120,7 +120,7 @@ The GitHub Actions workflow automatically:
 1. Installs Node.js dependencies
 2. Runs `npm run check`
 3. Runs `npm run build` to generate the static site (including post-build integration)
-4. Copies the converter tool
+4. Copies the animation editor tool
 5. Deploys to GitHub Pages
 
 See `.github/workflows/deploy-content-pages.yml` for workflow details.

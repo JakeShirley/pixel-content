@@ -1,6 +1,6 @@
-# Pixel Wall Animation Converter
+# Pixel Wall Animation Editor
 
-Static browser tool for converting GIF, PNG, or WebP images and the raw Expressive Pixels animation sequence format consumed by Pixel Wall firmware.
+Static browser tool for editing and converting GIF, PNG, WebP, and raw Expressive Pixels animation sequences consumed by Pixel Wall firmware.
 
 Open `index.html` in a browser, import a GIF, PNG, or WebP image, choose one of the fixed output sizes, position and scale the image in the output scene, choose a predictive encoding mode, and export a `.bin` file. Drag the image to move it, drag its lower-right handle to scale it, or use the X, Y, and Scale controls for exact placement. `Fit` shows the whole image and preserves empty scene space, while `Fill` covers the scene. PNG images are imported as a single frame. Animated WebP files retain their individual frames and timing in browsers that support the WebCodecs `ImageDecoder` API; static WebP files work in all browsers with WebP image support. Supported output sizes are 32 x 32, 32 x 64, 64 x 64, 64 x 32, 64 x 128, 128 x 64, and 128 x 128, with 64 x 64 selected by default. You can also import an existing `.bin` file to preview it, export the original `.bin` bytes losslessly, or recreate a paletted animated GIF from the decoded frame stream. Defaults are tuned for the Pixel Wall HUB75 player: 10 fps, 21 sampled frames, 128 colors, and predictive frame records.
 

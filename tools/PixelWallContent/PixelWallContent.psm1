@@ -437,7 +437,7 @@ function Write-ContentIndexHtml {
         <h1>Pixel Wall Animation Content</h1>
         <div class="summary" id="summary"></div>
         <div class="tools-links">
-            <a href="converter/">Animation Converter Tool</a>
+            <a href="converter/">Animation Editor</a>
         </div>
     </header>
     <main id="manifests"></main>
@@ -516,7 +516,7 @@ function Write-ContentIndexHtml {
             
             const converterLink = document.createElement("a");
             converterLink.href = `converter/?file=../${animation.path}`;
-            converterLink.textContent = "Open in Converter";
+            converterLink.textContent = "Open in Animation Editor";
             links.append(converterLink);
             
             if (animation.githubUrl) {
