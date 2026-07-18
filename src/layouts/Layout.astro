@@ -17,18 +17,22 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#f3f0e7" />
+    <meta name="theme-color" content="#f7f6f3" />
     <title>{title}</title>
     <style is:global>
       :root {
         color-scheme: light;
-        --ink: #17211d;
-        --muted: #5d6962;
-        --line: #d8ded8;
+        --ink: #343330;
+        --muted: #85817a;
+        --line: #dedbd5;
         --panel: #ffffff;
-        --page: #f3f0e7;
-        --accent: #126f62;
-        --accent-strong: #0a4d45;
+        --page: #f7f6f3;
+        --accent: #b48737;
+        --accent-strong: #85621f;
+        --surface-muted: #eeece7;
+        --backdrop: rgba(28, 27, 25, 0.72);
+        --font-body: Georgia, "Times New Roman", serif;
+        --font-ui: "Trebuchet MS", "Segoe UI", sans-serif;
       }
 
       * {
@@ -38,23 +42,20 @@ const {
       body {
         margin: 0;
         color: var(--ink);
-        background:
-          linear-gradient(135deg, rgba(18, 111, 98, 0.10), transparent 34rem),
-          radial-gradient(circle at top right, rgba(232, 169, 73, 0.16), transparent 26rem),
-          var(--page);
-        font-family: "Aptos", "Segoe UI", sans-serif;
+        background: var(--page);
+        font-family: var(--font-body);
         line-height: 1.45;
       }
 
       header,
       main,
       footer {
-        width: min(1120px, calc(100% - 32px));
+        width: min(1600px, calc(100% - 40px));
         margin: 0 auto;
       }
 
       header {
-        padding: 40px 0 24px;
+        padding: 0;
       }
 
       h1,
@@ -65,111 +66,40 @@ const {
       }
 
       h1 {
-        font-size: clamp(2rem, 6vw, 4rem);
-        line-height: 0.95;
-        max-width: 760px;
-      }
-
-      .summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 20px;
-      }
-
-      .summary span,
-      .manifest-title span {
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.68);
-        padding: 6px 10px;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-
-      .tools-links {
-        margin-top: 20px;
-        padding-top: 12px;
-        border-top: 1px solid var(--line);
-      }
-
-      .tools-links a {
-        color: var(--accent-strong);
-        font-weight: 700;
-        text-decoration: none;
-        display: inline-block;
-        padding: 8px 16px;
-        background: rgba(18, 111, 98, 0.08);
-        border-radius: 4px;
-      }
-
-      .tools-links a:hover {
-        background: rgba(18, 111, 98, 0.15);
-        text-decoration: underline;
+        font-size: 1.15rem;
+        line-height: 1;
+        letter-spacing: 0;
       }
 
       main {
-        display: grid;
-        gap: 28px;
-        padding: 0 0 40px;
-      }
-
-      section {
-        display: grid;
-        gap: 14px;
-      }
-
-      .manifest-title {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 10px;
-        padding-top: 10px;
-      }
-
-      .manifest-title h2 {
-        font-size: 1.45rem;
-      }
-
-      .manifest-title a,
-      footer a,
-      .details a {
-        color: var(--accent-strong);
-        font-weight: 700;
-        text-decoration: none;
-      }
-
-      .manifest-title a:hover,
-      footer a:hover,
-      .details a:hover {
-        text-decoration: underline;
+        padding: 36px 0 72px;
       }
 
       ol {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 12px;
-        list-style-position: inside;
+        columns: 5 240px;
+        column-gap: 6px;
+        list-style: none;
         margin: 0;
         padding: 0;
       }
 
-      li::marker {
-        color: var(--accent);
-        font-weight: 800;
-      }
-
       footer {
-        padding: 4px 0 36px;
+        padding: 20px 0 36px;
+        border-top: 1px solid var(--line);
         color: var(--muted);
-        font-size: 0.95rem;
+        font: 0.75rem/1.4 var(--font-ui);
       }
 
-      @media (max-width: 560px) {
+      @media (max-width: 600px) {
         header,
         main,
         footer {
-          width: min(100% - 20px, 1120px);
+          width: min(100% - 20px, 1600px);
+        }
+
+        ol {
+          columns: 2 150px;
+          column-gap: 4px;
         }
       }
     </style>
