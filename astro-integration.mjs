@@ -4,9 +4,14 @@ import { fileURLToPath } from 'url';
 import { collectAnimationMetadata } from './src/utils/collectAnimations.js';
 
 export default function pixelWallIntegration() {
+  let base = '/';
+
   return {
     name: 'pixel-wall-content',
     hooks: {
+      'astro:config:done': ({ config }) => {
+        base = config.base;
+      },
       'astro:server:setup': async ({ server }) => {
         const content = await collectAnimationMetadata('./assets/processed');
         const animations = new Map(
@@ -26,7 +31,11 @@ export default function pixelWallIntegration() {
         ]);
 
         server.middlewares.use((request, response, next) => {
-          const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+          const requestPathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+          const normalizedBase = base === '/' ? '' : `/${base.replace(/^\/+|\/+$/g, '')}`;
+          const pathname = normalizedBase && requestPathname.startsWith(`${normalizedBase}/`)
+            ? requestPathname.slice(normalizedBase.length)
+            : requestPathname;
           const animationPath = animations.get(pathname);
 
           if (animationPath) {
