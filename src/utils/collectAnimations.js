@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 /**
  * Read binary animation file and extract metadata
  */
@@ -41,7 +43,7 @@ function readAnimationMetadata(filePath) {
 /**
  * Collect all animation metadata from assets/processed directory
  */
-export async function collectAnimationMetadata(baseDir = './assets/processed') {
+export async function collectAnimationMetadata(baseDir = './assets/processed', rotationDate = new Date()) {
   const animations = [];
   const buckets = {};
   const standardDimensions = ['32x32', '32x64', '64x32', '64x64', '64x128', '128x64', '128x128'];
@@ -108,16 +110,22 @@ export async function collectAnimationMetadata(baseDir = './assets/processed') {
 
   walkDir(baseDir);
 
-  // Sort buckets in standard order
+  const unixDayId = Math.floor(rotationDate.getTime() / MILLISECONDS_PER_DAY);
+
+  // Sort buckets in standard order and rotate their contents once per UTC day.
   const sortedBuckets = {};
   for (const dim of standardDimensions) {
     if (buckets[dim]) {
-      sortedBuckets[dim] = buckets[dim];
+      const items = buckets[dim].sort((left, right) => left.localeCompare(right));
+      const offset = unixDayId % items.length;
+      sortedBuckets[dim] = [...items.slice(offset), ...items.slice(0, offset)];
     }
   }
   for (const [dim, items] of Object.entries(buckets)) {
     if (!sortedBuckets[dim]) {
-      sortedBuckets[dim] = items;
+      items.sort((left, right) => left.localeCompare(right));
+      const offset = unixDayId % items.length;
+      sortedBuckets[dim] = [...items.slice(offset), ...items.slice(0, offset)];
     }
   }
 
